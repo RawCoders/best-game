@@ -32,7 +32,7 @@ export default class SpriteLoader {
 
     draw(sprite, element, canvasX, canvasY) {
         const meta = this.get_meta(sprite, element);
-        this.ctx.drawImage(this.overworld, meta[0], meta[1], meta[2], meta[3], canvasX, canvasY, unit, unit);
+        this.ctx.drawImage(this.overworld, meta[0], meta[1], meta[2], meta[3], canvasX * unit, canvasY * unit, unit, unit);
     }
 
     get_meta(sprite, element) {

@@ -72,31 +72,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
-	var Map = _interopRequire(__webpack_require__(3));
+	var SpriteLoader = _interopRequire(__webpack_require__(3));
 	
-	var SpriteLoader = _interopRequire(__webpack_require__(4));
+	var Map = _interopRequire(__webpack_require__(4));
 	
 	var Game = (function () {
 	    function Game() {
-	        var _this = this;
-	
 	        _classCallCheck(this, Game);
 	
 	        this.setup_canvas();
 	        this.setup_variables();
 	        this.setup_keyboard();
-	        this.setup_sprites().then(function () {
-	            _this.setup_map();
-	        });
+	        this.bind_stop();
 	    }
 	
 	    _createClass(Game, {
+	        init: {
+	            value: function init() {
+	                var _this = this;
+	
+	                this.setup_sprites().then(function () {
+	                    _this.setup_map();
+	                    _this.start_loop();
+	                });
+	            }
+	        },
 	        setup_canvas: {
 	            value: function setup_canvas() {
 	                this.canvas = document.getElementById("canvas");
 	                this.canvas.width = 720;
 	                this.canvas.height = 480;
 	                this.ctx = canvas.getContext("2d");
+	            }
+	        },
+	        start_loop: {
+	            value: function start_loop() {
+	                this.game_loop = setInterval(this.draw.bind(this), this.o.frameRate);
+	            }
+	        },
+	        draw: {
+	            value: function draw() {
+	                this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
+	                this.map.draw();
 	            }
 	        },
 	        setup_sprites: {
@@ -113,7 +130,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        setup_map: {
 	            value: function setup_map() {
 	                this.map = new Map(this.ctx, this.spl);
-	                this.map.init();
 	            }
 	        },
 	        setup_variables: {
@@ -125,6 +141,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    frame: 0
 	                };
 	            }
+	        },
+	        bind_stop: {
+	            value: function bind_stop() {
+	                var _this = this;
+	
+	                document.getElementById("stop").addEventListener("click", function () {
+	                    clearInterval(_this.game_loop);
+	                });
+	            }
 	        }
 	    });
 	
@@ -132,6 +157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 	
 	var game = new Game();
+	game.init();
 
 /***/ },
 /* 2 */
@@ -197,38 +223,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var Map = (function () {
-	    function Map(ctx, spl) {
-	        _classCallCheck(this, Map);
-	
-	        this.ctx = ctx;
-	        this.spl = spl;
-	    }
-	
-	    _createClass(Map, {
-	        init: {
-	            value: function init() {
-	                console.log("draw map");
-	                this.spl.draw("overworld", "grass", 16, 16);
-	            }
-	        }
-	    });
-	
-	    return Map;
-	})();
-	
-	module.exports = Map;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-	
-	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-	
 	var SpriteLoader = (function () {
 	    function SpriteLoader(ctx) {
 	        _classCallCheck(this, SpriteLoader);
@@ -271,7 +265,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        draw: {
 	            value: function draw(sprite, element, canvasX, canvasY) {
 	                var meta = this.get_meta(sprite, element);
-	                this.ctx.drawImage(this.overworld, meta[0], meta[1], meta[2], meta[3], canvasX, canvasY, unit, unit);
+	                this.ctx.drawImage(this.overworld, meta[0], meta[1], meta[2], meta[3], canvasX * unit, canvasY * unit, unit, unit);
 	            }
 	        },
 	        get_meta: {
@@ -298,6 +292,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	var unit = 16;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var Map = (function () {
+	    function Map(ctx, spl) {
+	        _classCallCheck(this, Map);
+	
+	        this.ctx = ctx;
+	        this.spl = spl;
+	    }
+	
+	    _createClass(Map, {
+	        draw: {
+	            value: function draw() {
+	                this.spl.draw("overworld", "grass", 0, 0);
+	            }
+	        }
+	    });
+	
+	    return Map;
+	})();
+	
+	module.exports = Map;
 
 /***/ }
 /******/ ])

@@ -4,8 +4,7 @@ export default class Map {
         this.spl = spl;
     }
 
-    init() {
-        console.log('draw map');
-        this.spl.draw('overworld', 'grass', 16, 16);
+    draw() {
+        this.spl.draw('overworld', 'grass', 0, 0);
     }
 }
