@@ -3,12 +3,14 @@ import Character from './Character';
 import Keyboard from './Keyboard';
 
 export default class Warrior extends Character {
-    constructor(spl, initial_position) {
+    constructor(spl, initial_position, name) {
         super(spl, initial_position);
 
         this.keyboard = new Keyboard();
         this.sprite = 'warrior';
         this.action = 'walk_down';
+
+        this.name = name;
     }
 
     update_values() {
@@ -39,8 +41,14 @@ export default class Warrior extends Character {
         }
     }
 
+    draw_name() {
+        const name = this.name;
+        this.spl.drawText(name, this.pos[0] * 2 - name.length/2 + 1, (this.pos[1] - 1) * 2, { scale:1 });
+    }
+
     draw() {
         super.draw();
+        this.draw_name();
         return this.pos;
     }
 }

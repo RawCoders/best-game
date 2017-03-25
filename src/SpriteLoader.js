@@ -39,8 +39,9 @@ export default class SpriteLoader {
         return meta.next_frame;
     }
 
-    drawText(string, canvasX, canvasY, {scale=2} = {}) {
+    drawText(string, canvasX, canvasY, {scale=1} = {}) {
         let cursor = [canvasX, canvasY];
+        let unit = font_unit * scale;
         for (let char of string) {
             const meta = this.get_font_meta(char);
             this.ctx.drawImage(this.font, meta.x, meta.y, meta.width, meta.height, cursor[0] * unit, cursor[1] * unit, meta.width * scale, meta.height * scale);
@@ -70,7 +71,7 @@ export default class SpriteLoader {
 
     get_font_meta(char) {
         let meta = font_json[char];
-        meta = meta.map(n => n * 8);
+        meta = meta.map(n => n * font_unit);
         return {
             x: meta[0],
             y: meta[1],
@@ -233,3 +234,4 @@ const font_json = {
 }
 
 const unit = meta.unit;
+const font_unit = 8;
