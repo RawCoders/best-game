@@ -20,26 +20,26 @@ export default class Map {
     draw(char_pos) {
         if(char_pos) {
             const [x, y] = char_pos;
-            if(x < this.camera_width/4) {
+            if(x < this.camera_width/4 && this.keyboard.left_pressed) {
                 this.camera_top_x -= 1;
                 if(this.camera_top_x < 0)
                     this.camera_top_x = 0
             }
 
-            if(x > this.camera_width*3/4) {
+            if(x > this.camera_width*3/4 && this.keyboard.right_pressed) {
                 this.camera_top_x += 1;
                 if(this.camera_top_x > this.map_width - this.camera_width)
                     this.camera_top_x = this.map_width - this.camera_width;
                 
             }
 
-            if(y < this.camera_height/4) {
+            if(y < this.camera_height/4 && this.keyboard.up_pressed) {
                 this.camera_top_y -= 1;
                 if(this.camera_top_y < 0)
                     this.camera_top_y = 0;
             }
 
-            if(y > this.camera_height*3/4) {
+            if(y > this.camera_height*3/4 && this.keyboard.down_pressed) {
                 this.camera_top_y += 1;
                 if(this.camera_top_y > this.map_height - this.camera_height)
                     this.camera_top_y = this.map_height - this.camera_height;
