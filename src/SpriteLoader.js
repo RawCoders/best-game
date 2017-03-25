@@ -61,6 +61,7 @@ export default class SpriteLoader {
 const sprite_json = {
     overworld: {
         grass: [0, 0, 1, 1],
+        blue_test: [0, 1, 1, 1],
         water_waving: [
             [0, 1, 1, 1],
             [1, 1, 1, 1],

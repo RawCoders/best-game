@@ -54,7 +54,7 @@ class Game {
     setup_character() {
         this.character = new Character(this.spl);
     }
-    
+
     setup_variables() {
         this.o = {
             canvas_height: this.canvas.height,
