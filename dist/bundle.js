@@ -72,9 +72,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
-	var SpriteLoader = _interopRequire(__webpack_require__(4));
+	var SpriteLoader = _interopRequire(__webpack_require__(3));
 	
-	var Map = _interopRequire(__webpack_require__(3));
+	var Map = _interopRequire(__webpack_require__(4));
 	
 	var Character = _interopRequire(__webpack_require__(5));
 	
@@ -232,36 +232,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var Map = (function () {
-	    function Map(ctx, spl) {
-	        _classCallCheck(this, Map);
-	
-	        this.spl = spl;
-	    }
-	
-	    _createClass(Map, {
-	        draw: {
-	            value: function draw() {
-	                this.spl.draw("overworld", "grass", 0, 0);
-	            }
-	        }
-	    });
-	
-	    return Map;
-	})();
-	
-	module.exports = Map;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-	
-	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-	
 	var SpriteLoader = (function () {
 	    function SpriteLoader(ctx) {
 	        _classCallCheck(this, SpriteLoader);
@@ -303,35 +273,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	        draw: {
-	            value: function draw(sprite, element, canvasX, canvasY, frame) {
-	                var meta = this.get_meta(sprite, element);
-	                var x = undefined,
-	                    y = undefined,
-	                    width = undefined,
-	                    height = undefined;
-	                if (typeof meta[0] !== "number" && "length" in meta[0]) {
-	                    x = meta[frame][0];
-	                    y = meta[frame][1];
-	                    width = meta[frame][2];
-	                    height = meta[frame][3];
-	                } else {
-	                    x = meta[0];
-	                    y = meta[1];
-	                    width = meta[2];
-	                    height = meta[3];
-	                }
-	                this.ctx.drawImage(this[sprite], x, y, width, height, canvasX * unit, canvasY * unit, unit, unit);
-	                console.log(this[sprite]);
-	                return frame + 1;
+	            value: function draw(sprite, element, canvasX, canvasY) {
+	                var frame = arguments[4] === undefined ? 0 : arguments[4];
+	
+	                var meta = this.get_meta(sprite, element, frame);
+	                this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width, meta.height);
+	                return meta.next_frame;
 	            }
 	        },
 	        get_meta: {
-	            value: function get_meta(sprite, element) {
+	            value: function get_meta(sprite, element, frame) {
 	                var meta = sprite_json[sprite][element];
+	                var x = undefined,
+	                    y = undefined,
+	                    width = undefined,
+	                    height = undefined,
+	                    is_animation = false,
+	                    next_frame = 0;
+	                is_animation = typeof meta[0] !== "number" && "length" in meta[0];
+	
+	                if (is_animation) {
+	                    meta = meta[frame];
+	                    next_frame = (frame + 1) % meta.length;
+	                }
+	
 	                meta = meta.map(function (n) {
 	                    return n * unit;
 	                });
-	                return meta;
+	
+	                x = meta[0];
+	                y = meta[1];
+	                width = meta[2];
+	                height = meta[3];
+	
+	                return { x: x, y: y, width: width, height: height, is_animation: is_animation, next_frame: next_frame };
 	            }
 	        }
 	    });
@@ -360,6 +335,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	var unit = 16;
 
 /***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var Map = (function () {
+	    function Map(ctx, spl) {
+	        _classCallCheck(this, Map);
+	
+	        this.spl = spl;
+	    }
+	
+	    _createClass(Map, {
+	        draw: {
+	            value: function draw() {
+	                this.spl.draw("overworld", "grass", 0, 0);
+	            }
+	        }
+	    });
+	
+	    return Map;
+	})();
+	
+	module.exports = Map;
+
+/***/ },
 /* 5 */
 /***/ function(module, exports) {
 
@@ -380,7 +385,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _createClass(Character, {
 	        draw: {
 	            value: function draw() {
-	                this.next_frame = this.spl.draw("warrior", "walk_left", 16, 16, this.next_frame);
+	                this.next_frame = this.spl.draw("warrior", "walk_left", 44, 10, this.next_frame);
 	            }
 	        }
 	    });

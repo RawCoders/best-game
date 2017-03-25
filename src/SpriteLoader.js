@@ -30,29 +30,30 @@ export default class SpriteLoader {
         return this.setup_images();
     }
 
-    draw(sprite, element, canvasX, canvasY, frame) {
-        const meta = this.get_meta(sprite, element);
-        let x, y, width, height;
-        if (typeof meta[0] !== 'number' && 'length' in meta[0]) {
-            x = meta[frame][0];
-            y = meta[frame][1];
-            width = meta[frame][2];
-            height = meta[frame][3];
-        } else {
-            x = meta[0];
-            y = meta[1];
-            width = meta[2];
-            height = meta[3];
-        }
-        this.ctx.drawImage(this[sprite], x, y, width, height, canvasX * unit, canvasY * unit, unit, unit);
-        console.log(this[sprite]);
-        return frame + 1;
+    draw(sprite, element, canvasX, canvasY, frame = 0) {
+        const meta = this.get_meta(sprite, element, frame);
+        this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width, meta.height);
+        return meta.next_frame;
     }
 
-    get_meta(sprite, element) {
+    get_meta(sprite, element, frame) {
         let meta = sprite_json[sprite][element];
+        let x, y, width, height, is_animation = false, next_frame = 0;
+        is_animation = typeof meta[0] !== 'number' && 'length' in meta[0];
+
+        if(is_animation) {
+            meta = meta[frame];
+            next_frame = (frame + 1) % meta.length;
+        }
+
         meta = meta.map(n => n * unit);
-        return meta;
+
+        x = meta[0];
+        y = meta[1];
+        width = meta[2];
+        height = meta[3];
+
+        return { x, y, width, height, is_animation, next_frame };
     }
 }
 
