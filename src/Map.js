@@ -17,24 +17,35 @@ export default class Map {
         this.generate_map();
     }
 
-    draw() {
-        if (this.keyboard.right_pressed) {
-            if (this.camera_top_x + 1 < this.map_width - this.camera_width) {
-                this.camera_top_x++;
+    draw(char_pos) {
+        if(char_pos) {
+            const [x, y] = char_pos;
+            if(x < this.camera_width/4) {
+                this.camera_top_x -= 1;
+                if(this.camera_top_x < 0)
+                    this.camera_top_x = 0
             }
-        } else if (this.keyboard.down_pressed) {
-            if (this.camera_top_y + 1 < this.map_height - this.camera_height) {
-                this.camera_top_y++;
+
+            if(x > this.camera_width*3/4) {
+                this.camera_top_x += 1;
+                if(this.camera_top_x > this.map_width - this.camera_width)
+                    this.camera_top_x = this.map_width - this.camera_width;
+                
             }
-        } else if (this.keyboard.left_pressed) {
-            if (this.camera_top_x - 1 >= 0) {
-                this.camera_top_x--;
+
+            if(y < this.camera_height/4) {
+                this.camera_top_y -= 1;
+                if(this.camera_top_y < 0)
+                    this.camera_top_y = 0;
             }
-        } else if (this.keyboard.up_pressed) {
-            if (this.camera_top_y - 1 >= 0) {
-                this.camera_top_y--;
+
+            if(y > this.camera_height*3/4) {
+                this.camera_top_y += 1;
+                if(this.camera_top_y > this.map_height - this.camera_height)
+                    this.camera_top_y = this.map_height - this.camera_height;
             }
         }
+
         this.render_camera(this.camera_top_x, this.camera_top_y);
     }
 

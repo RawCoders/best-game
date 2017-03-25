@@ -34,8 +34,8 @@ class Game {
 
     draw() {
         this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
-        this.map.draw();
-        this.character.draw();
+        this.map.draw(this.char_pos);
+        this.char_pos = this.character.draw();
     }
 
     setup_sprites() {

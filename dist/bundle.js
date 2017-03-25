@@ -70,15 +70,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(5));
+	var meta = _interopRequire(__webpack_require__(6));
 	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
-	var SpriteLoader = _interopRequire(__webpack_require__(4));
+	var SpriteLoader = _interopRequire(__webpack_require__(3));
 	
-	var Map = _interopRequire(__webpack_require__(3));
+	var Map = _interopRequire(__webpack_require__(4));
 	
-	var Character = _interopRequire(__webpack_require__(6));
+	var Character = _interopRequire(__webpack_require__(5));
 	
 	var Game = (function () {
 	    function Game() {
@@ -118,8 +118,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        draw: {
 	            value: function draw() {
 	                this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
-	                this.map.draw();
-	                this.character.draw();
+	                this.map.draw(this.char_pos);
+	                this.char_pos = this.character.draw();
 	            }
 	        },
 	        setup_sprites: {
@@ -236,109 +236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(5));
-	
-	var Keyboard = _interopRequire(__webpack_require__(2));
-	
-	var Map = (function () {
-	    function Map(ctx, spl) {
-	        _classCallCheck(this, Map);
-	
-	        this.spl = spl;
-	
-	        this.map = [];
-	        this.camera_width = meta.camera[0];
-	        this.camera_height = meta.camera[1];
-	        this.map_width = meta.map[0];
-	        this.map_height = meta.map[1];
-	
-	        this.camera_top_x = 0;
-	        this.camera_top_y = 0;
-	        this.keyboard = new Keyboard();
-	        this.generate_map();
-	    }
-	
-	    _createClass(Map, {
-	        draw: {
-	            value: function draw() {
-	                if (this.keyboard.right_pressed) {
-	                    if (this.camera_top_x + 1 < this.map_width - this.camera_width) {
-	                        this.camera_top_x++;
-	                    }
-	                } else if (this.keyboard.down_pressed) {
-	                    if (this.camera_top_y + 1 < this.map_height - this.camera_height) {
-	                        this.camera_top_y++;
-	                    }
-	                } else if (this.keyboard.left_pressed) {
-	                    if (this.camera_top_x - 1 >= 0) {
-	                        this.camera_top_x--;
-	                    }
-	                } else if (this.keyboard.up_pressed) {
-	                    if (this.camera_top_y - 1 >= 0) {
-	                        this.camera_top_y--;
-	                    }
-	                }
-	                this.render_camera(this.camera_top_x, this.camera_top_y);
-	            }
-	        },
-	        generate_map: {
-	            value: function generate_map() {
-	                // consider spacetime drawing: for multi units(space) and animations(time)
-	                // and both
-	                for (var i = 0; i < this.map_width; i++) {
-	                    var row = [];
-	                    for (var j = 0; j < this.map_height; j++) {
-	                        if ((i + j) % 5 === 0) {
-	                            row.push("blue_test");
-	                        } else {
-	                            row.push("grass");
-	                        }
-	                        row.push("grass");
-	                    }
-	                    this.map.push(row);
-	                }
-	            }
-	        },
-	        render_camera: {
-	            value: function render_camera(x, y) {
-	                // same as canvas
-	                var camera = [];
-	                // camera
-	                for (var i = x; i < x + this.camera_width; i++) {
-	                    var row = [];
-	                    for (var j = y; j < y + this.camera_height; j++) {
-	                        row.push(this.map[i][j]);
-	                    }
-	                    camera.push(row);
-	                }
-	
-	                for (var i = 0; i < this.camera_width; i++) {
-	                    for (var j = 0; j < this.camera_height; j++) {
-	                        this.spl.draw("overworld", camera[i][j], i, j);
-	                    }
-	                }
-	            }
-	        }
-	    });
-	
-	    return Map;
-	})();
-	
-	module.exports = Map;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-	
-	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-	
-	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-	
-	var meta = _interopRequire(__webpack_require__(5));
+	var meta = _interopRequire(__webpack_require__(6));
 	
 	var SpriteLoader = (function () {
 	    function SpriteLoader(ctx) {
@@ -444,23 +342,121 @@ return /******/ (function(modules) { // webpackBootstrap
 	var unit = meta.unit;
 
 /***/ },
-/* 5 */
-/***/ function(module, exports) {
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
-	var meta = {
-	    canvas: [720, 480],
-	    map: [64, 64],
-	    unit: 16
-	};
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 	
-	meta.camera = [meta.canvas[0] / meta.unit, meta.canvas[1] / meta.unit];
+	var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; for (var _iterator = arr[Symbol.iterator](), _step; !(_step = _iterator.next()).done;) { _arr.push(_step.value); if (i && _arr.length === i) break; } return _arr; } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } };
 	
-	module.exports = meta;
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var meta = _interopRequire(__webpack_require__(6));
+	
+	var Keyboard = _interopRequire(__webpack_require__(2));
+	
+	var Map = (function () {
+	    function Map(ctx, spl) {
+	        _classCallCheck(this, Map);
+	
+	        this.spl = spl;
+	
+	        this.map = [];
+	        this.camera_width = meta.camera[0];
+	        this.camera_height = meta.camera[1];
+	        this.map_width = meta.map[0];
+	        this.map_height = meta.map[1];
+	
+	        this.camera_top_x = 0;
+	        this.camera_top_y = 0;
+	        this.keyboard = new Keyboard();
+	        this.generate_map();
+	    }
+	
+	    _createClass(Map, {
+	        draw: {
+	            value: function draw(char_pos) {
+	                if (char_pos) {
+	                    var _char_pos = _slicedToArray(char_pos, 2);
+	
+	                    var x = _char_pos[0];
+	                    var y = _char_pos[1];
+	
+	                    if (x < this.camera_width / 4) {
+	                        this.camera_top_x -= 1;
+	                        if (this.camera_top_x < 0) this.camera_top_x = 0;
+	                    }
+	
+	                    if (x > this.camera_width * 3 / 4) {
+	                        this.camera_top_x += 1;
+	                        if (this.camera_top_x > this.map_width - this.camera_width) this.camera_top_x = this.map_width - this.camera_width;
+	                    }
+	
+	                    if (y < this.camera_height / 4) {
+	                        this.camera_top_y -= 1;
+	                        if (this.camera_top_y < 0) this.camera_top_y = 0;
+	                    }
+	
+	                    if (y > this.camera_height * 3 / 4) {
+	                        this.camera_top_y += 1;
+	                        if (this.camera_top_y > this.map_height - this.camera_height) this.camera_top_y = this.map_height - this.camera_height;
+	                    }
+	                }
+	
+	                this.render_camera(this.camera_top_x, this.camera_top_y);
+	            }
+	        },
+	        generate_map: {
+	            value: function generate_map() {
+	                // consider spacetime drawing: for multi units(space) and animations(time)
+	                // and both
+	                for (var i = 0; i < this.map_width; i++) {
+	                    var row = [];
+	                    for (var j = 0; j < this.map_height; j++) {
+	                        if ((i + j) % 5 === 0) {
+	                            row.push("blue_test");
+	                        } else {
+	                            row.push("grass");
+	                        }
+	                        row.push("grass");
+	                    }
+	                    this.map.push(row);
+	                }
+	            }
+	        },
+	        render_camera: {
+	            value: function render_camera(x, y) {
+	                // same as canvas
+	                var camera = [];
+	                // camera
+	                for (var i = x; i < x + this.camera_width; i++) {
+	                    var row = [];
+	                    for (var j = y; j < y + this.camera_height; j++) {
+	                        row.push(this.map[i][j]);
+	                    }
+	                    camera.push(row);
+	                }
+	
+	                for (var i = 0; i < this.camera_width; i++) {
+	                    for (var j = 0; j < this.camera_height; j++) {
+	                        this.spl.draw("overworld", camera[i][j], i, j);
+	                    }
+	                }
+	            }
+	        }
+	    });
+	
+	    return Map;
+	})();
+	
+	module.exports = Map;
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -471,7 +467,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(5));
+	var meta = _interopRequire(__webpack_require__(6));
 	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
@@ -512,6 +508,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                this.action = action;
 	                this.next_frame = this.spl.draw("warrior", action, pos[0], pos[1], this.next_frame);
+	                return pos;
 	            }
 	        }
 	    });
@@ -520,6 +517,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	})();
 	
 	module.exports = Character;
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var meta = {
+	    canvas: [720, 480],
+	    map: [64, 64],
+	    unit: 16
+	};
+	
+	meta.camera = [meta.canvas[0] / meta.unit, meta.canvas[1] / meta.unit];
+	
+	module.exports = meta;
 
 /***/ }
 /******/ ])
