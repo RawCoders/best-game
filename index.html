@@ -7,12 +7,24 @@
   <style>
     * { margin: 0; padding: 0 }
     body { text-align: center; }
-    canvas { background-color: grey; }
+    canvas { background-color: green; }
+    h1 {margin: 5px;}
+    button {
+      margin-bottom: 10px;
+      width: 60px;
+      height: 30px;
+      background: none;
+      border: solid black 1px;
+    }
+    button:hover {
+      background: grey;
+      color: white;
+    }
   </style>
 </head>
 
 <body>
-    <h1 id="title">best game</h1>
+    <h1 id="title">Best Game</h1>
     <button id="stop">Stop</button><br>
     <canvas id="canvas"></canvas>
     <script src="dist/bundle.js"></script>
