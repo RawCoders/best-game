@@ -1,3 +1,4 @@
+import meta from './Meta';
 import Keyboard from './Keyboard';
 
 export default class Map {
@@ -5,10 +6,10 @@ export default class Map {
         this.spl = spl;
 
         this.map = [];
-        this.camera_width = 8;
-        this.camera_height = 8;
-        this.map_width = 16;
-        this.map_height = 16;
+        this.camera_width = meta.camera[0];
+        this.camera_height = meta.camera[1];
+        this.map_width = meta.map[0];
+        this.map_height = meta.map[1];
 
         this.camera_top_x = 0;
         this.camera_top_y = 0;
@@ -17,9 +18,6 @@ export default class Map {
     }
 
     draw() {
-        // this.spl.draw('overworld', 'grass', 0, 0);
-         // this.spl.draw('overworld', 'grass', 0, 1);
-        // current state: start pixel of camera, constraints
         if (this.keyboard.right_pressed) {
             if (this.camera_top_x + 1 < this.map_width - this.camera_width) {
                 this.camera_top_x++;
@@ -58,16 +56,8 @@ export default class Map {
     }
 
     render_camera(x, y) {
-        console.log(x, y);
         // same as canvas
-
-        if (x >= this.map_width - this.camera_width || y >= this.map_height - this.camera_height) {
-            console.log("return", x, y);
-            return;
-        }
-
         var camera = [];
-
         // camera
         for (var i = x; i < x + this.camera_width; i++) {
             var row = [];

@@ -236,6 +236,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
+	var meta = _interopRequire(__webpack_require__(5));
+	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
 	var Map = (function () {
@@ -245,10 +247,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.spl = spl;
 	
 	        this.map = [];
-	        this.camera_width = 8;
-	        this.camera_height = 8;
-	        this.map_width = 16;
-	        this.map_height = 16;
+	        this.camera_width = meta.camera[0];
+	        this.camera_height = meta.camera[1];
+	        this.map_width = meta.map[0];
+	        this.map_height = meta.map[1];
 	
 	        this.camera_top_x = 0;
 	        this.camera_top_y = 0;
@@ -259,9 +261,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _createClass(Map, {
 	        draw: {
 	            value: function draw() {
-	                // this.spl.draw('overworld', 'grass', 0, 0);
-	                // this.spl.draw('overworld', 'grass', 0, 1);
-	                // current state: start pixel of camera, constraints
 	                if (this.keyboard.right_pressed) {
 	                    if (this.camera_top_x + 1 < this.map_width - this.camera_width) {
 	                        this.camera_top_x++;
@@ -302,16 +301,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        render_camera: {
 	            value: function render_camera(x, y) {
-	                console.log(x, y);
 	                // same as canvas
-	
-	                if (x >= this.map_width - this.camera_width || y >= this.map_height - this.camera_height) {
-	                    console.log("return", x, y);
-	                    return;
-	                }
-	
 	                var camera = [];
-	
 	                // camera
 	                for (var i = x; i < x + this.camera_width; i++) {
 	                    var row = [];
