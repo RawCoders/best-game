@@ -33,13 +33,13 @@ export default class SpriteLoader {
         return this.setup_images();
     }
 
-    draw(sprite, element, canvasX, canvasY, { frame, scale } = { frame: 0, scale: 1 }) {
+    draw(sprite, element, canvasX, canvasY, {frame=0, scale=1} = {}) {
         const meta = this.get_meta(sprite, element, frame);
         this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width * scale, meta.height * scale);
         return meta.next_frame;
     }
 
-    drawText(string, canvasX, canvasY, { scale } = { scale: 2 }) {
+    drawText(string, canvasX, canvasY, {scale=2} = {}) {
         let cursor = [canvasX, canvasY];
         for (let char of string) {
             const meta = this.get_font_meta(char);
