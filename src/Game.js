@@ -2,7 +2,7 @@ import meta from './Meta';
 import Keyboard from './Keyboard';
 import SpriteLoader from './SpriteLoader';
 import Map from './Map';
-import Character from './Character';
+import Warrior from './Warrior';
 import Enemy from './Enemy';
 import WelcomeScreen from './WelcomeScreen';
 
@@ -24,7 +24,7 @@ class Game {
     start_game() {
         this.setup_welcome_screen();
         this.setup_map();
-        this.setup_character();
+        this.setup_warrior();
         this.setup_enemy();
         this.start_loop();
     }
@@ -46,9 +46,9 @@ class Game {
             this.welcome_screen.draw();
         } else {
             this.map.draw(this.char_pos);
-            this.char_pos = this.character.draw();
-            this.enemy_1.draw(this.character);
-            this.enemy_2.draw(this.character);
+            this.char_pos = this.warrior.draw();
+            this.enemy_1.draw(this.warrior);
+            this.enemy_2.draw(this.warrior);
         }
     }
 
@@ -73,8 +73,11 @@ class Game {
         this.map = new Map(this.ctx, this.spl);
     }
 
-    setup_character() {
-        this.character = new Character(this.spl);
+    setup_warrior() {
+        this.warrior = new Warrior(
+            this.spl,
+            [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)]
+        );
     }
 
     setup_enemy() {

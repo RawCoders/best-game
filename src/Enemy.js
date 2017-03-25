@@ -1,34 +1,37 @@
 import meta from './Meta';
+import Character from './Character';
 
-export default class Enemy {
+export default class Enemy extends Character {
     constructor(spl, pos, speed) {
-        this.spl = spl;
-        this.next_frame = 0;
-        this.pos = pos;
+        super(spl, pos);
+
+        this.sprite = 'enemy'
         this.action = 'walk_down';
         this.speed = speed;
     }
 
-    draw(character) {
-        let action = this.action;
+    update_values(character) {
         let pos = this.pos;
         let speed = this.speed;
         if (character.pos[1] < pos[1]) {
-            pos[1] = pos[1] - speed*1;
-            action = 'walk_up';
+            pos[1] = pos[1] - speed * 1;
+            this.action = 'walk_up';
         } else if (character.pos[1] > pos[1]) {
-            pos[1] = pos[1] + speed*1;
-            action = 'walk_down';
+            pos[1] = pos[1] + speed * 1;
+            this.action = 'walk_down';
         } else if (character.pos[0] < pos[0]) {
-            pos[0] = pos[0] - speed*1;
-            action = 'walk_left';
+            pos[0] = pos[0] - speed * 1;
+            this.action = 'walk_left';
         } else if (character.pos[0] > pos[0]) {
-            pos[0] = pos[0] + speed*1;
-            action = 'walk_right';
+            pos[0] = pos[0] + speed * 1;
+            this.action = 'walk_right';
         } else {
             this.next_frame = 0;
         }
-        this.action = action;
-        this.next_frame = this.spl.draw('enemy', action, pos[0], pos[1], this.next_frame);
+    }
+
+    draw(character) {
+        this.update_values = this.update_values.bind(this, character);
+        super.draw();
     }
 }
