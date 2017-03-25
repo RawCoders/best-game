@@ -1,3 +1,4 @@
+import meta from './Meta';
 export default class SpriteLoader {
 
     constructor(ctx) {
@@ -123,4 +124,4 @@ const sprite_json = {
     }
 };
 
-const unit = 16;
+const unit = meta.unit;

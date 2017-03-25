@@ -1,3 +1,4 @@
+import meta from './Meta';
 import Keyboard from './Keyboard';
 import SpriteLoader from './SpriteLoader';
 import Map from './Map';
@@ -22,8 +23,8 @@ class Game {
 
     setup_canvas() {
         this.canvas = document.getElementById('canvas');
-        this.canvas.width = 720;
-        this.canvas.height = 480;
+        this.canvas.width = meta.canvas[0];
+        this.canvas.height = meta.canvas[1];
         this.ctx = canvas.getContext('2d');
     }
 
