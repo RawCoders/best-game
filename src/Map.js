@@ -30,7 +30,7 @@ export default class Map {
                 this.camera_top_x += 1;
                 if(this.camera_top_x > this.map_width - this.camera_width)
                     this.camera_top_x = this.map_width - this.camera_width;
-                
+
             }
 
             if(y < this.camera_height/4 && this.keyboard.up_pressed) {
@@ -50,26 +50,68 @@ export default class Map {
     }
 
     generate_map() {
-        // consider spacetime drawing: for multi units(space) and animations(time)
-        // and both
+        var me = this;
+        // TO DO: start at centre, define obstacles
+        // TO DO: consider spacetime drawing: for multi units(space) and animations(time)
+
         for (var i = 0; i < this.map_width; i++) {
-            var row = [];
+            var row = []
             for (var j = 0; j < this.map_height; j++) {
-                if ((i + j) % 5 === 0) {
-                    row.push("blue_test");
-                } else {
-                    row.push("grass");
-                }
-                row.push("grass");
+                row.push(0);
             }
             this.map.push(row);
+        }
+
+        let terrain_objects = ['yellow_patch', 'blue_patch', 'green_patch_1', 'green_patch_2', 'green_patch_3', 'green_patch_4'];
+
+        let frequencies = {
+            area12: [6,7],
+            area9: [15,16,17],
+            area6: [19, 20, 21],
+            area4: [24, 25, 26],
+            area2: [24, 25, 26],
+            area1: [22, 23, 24],
+        };
+
+        terrain_objects.forEach((object) => {
+            const meta = this.spl.get_sprite_size('overworld', object);
+            let frequency = frequencies['area'+(meta.width * meta.height)][0];   // [0]:first for now, make random later
+
+            for(var i = 0; i < frequency; i++){
+                var [rand_x, rand_y] = get_random_start_position(meta.width, meta.height);
+                place_object(object, rand_x, rand_y, meta.width, meta.height);
+            }
+        });
+
+        function place_object(object, x, y, width, height) {
+            for (var i = x; i < x + width; i++) {
+                for (var j = y; j < y + height; j++) {
+                    if(me.map[i][j] !== 0) {
+                        // regenerate random start and retry?
+                        return;
+                    }
+                }
+            }
+
+            for (var i = x; i < x + width; i++) {
+                for (var j = y; j < y + height; j++) {
+                    if(i === x && j === y) {
+                        me.map[i][j] = object;
+                    } else {
+                        me.map[i][j] = 1;
+                    }
+                }
+            }
+        }
+
+        function get_random_start_position(width, height) {
+            return [Math.floor(Math.random() * (me.map_width-width)),
+                Math.floor(Math.random() * (me.map_height-height))]
         }
     }
 
     render_camera(x, y) {
-        // same as canvas
         var camera = [];
-        // camera
         for (var i = x; i < x + this.camera_width; i++) {
             var row = [];
             for (var j = y; j < y + this.camera_height; j++) {
@@ -80,7 +122,14 @@ export default class Map {
 
         for (var i = 0; i < this.camera_width; i++) {
             for (var j = 0; j < this.camera_height; j++) {
-                this.spl.draw("overworld", camera[i][j], i, j);
+                if(camera[i][j] === 1) {
+                    continue;
+                } else if (camera[i][j] === 0) {
+                    this.spl.draw("overworld", 'grass', i, j);
+                } else {
+                    this.spl.draw("overworld", camera[i][j], i, j);
+                }
+
             }
         }
     }

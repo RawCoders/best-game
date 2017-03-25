@@ -49,7 +49,7 @@ export default class SpriteLoader {
         }
     }
 
-    get_meta(sprite, element, frame) {
+    get_meta(sprite, element, frame = 0) {
         let meta = sprite_json[sprite][element];
         let x, y, width, height, is_animation = false, next_frame = 0;
         is_animation = typeof meta[0] !== 'number' && 'length' in meta[0];
@@ -79,12 +79,23 @@ export default class SpriteLoader {
             height: meta[3]
         }
     }
+
+    get_sprite_size(sprite, element) {
+        let meta = sprite_json[sprite][element];
+        return {width: meta[2], height: meta[3]};
+    }
 }
 
 const sprite_json = {
     overworld: {
         grass: [0, 0, 1, 1],
         blue_test: [0, 1, 1, 1],
+        yellow_patch: [0, 3, 3, 3],
+        blue_patch: [2, 6, 3, 3],
+        green_patch_1: [16, 32, 3, 2],
+        green_patch_2: [9, 27, 2, 2],
+        green_patch_3: [11, 28, 2, 1],
+        green_patch_4: [13, 28, 1, 1],
         water_waving: [
             [0, 1, 1, 1],
             [1, 1, 1, 1],
@@ -94,7 +105,7 @@ const sprite_json = {
             [1, 2, 1, 1],
             [2, 2, 1, 1],
             [3, 2, 1, 1]
-        ]
+        ],
     },
     warrior: {
         walk_down: [
