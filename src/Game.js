@@ -61,14 +61,11 @@ class Game {
         this.character = new Character(this.spl);
     }
 
-<<<<<<< c9efc7ad2b2d00321568155fd15af67873d6e644
-=======
     setup_enemy() {
         this.enemy_1 = new Enemy(this.spl, [Math.floor(meta.camera[0])-2, 2], 1/2);
         this.enemy_2 = new Enemy(this.spl, [2, Math.floor(meta.camera[1])-2], 1/4);
     }
-    
->>>>>>> added enemies and their movements
+
     setup_variables() {
         this.o = {
             canvas_height: this.canvas.height,
