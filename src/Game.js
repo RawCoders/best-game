@@ -4,6 +4,7 @@ import SpriteLoader from './SpriteLoader';
 import Map from './Map';
 import Character from './Character';
 import Enemy from './Enemy';
+import WelcomeScreen from './WelcomeScreen';
 
 class Game {
     constructor() {
@@ -16,11 +17,16 @@ class Game {
     init() {
         this.setup_sprites()
             .then(() => {
-                this.setup_map();
-                this.setup_character();
-                this.setup_enemy();
-                this.start_loop();
+                this.start_game();
             });
+    }
+
+    start_game() {
+        this.setup_welcome_screen();
+        this.setup_map();
+        this.setup_character();
+        this.setup_enemy();
+        this.start_loop();
     }
 
     setup_canvas() {
@@ -36,12 +42,14 @@ class Game {
 
     draw() {
         this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
-        this.map.draw(this.char_pos);
-        this.char_pos = this.character.draw();
-        this.map.draw();
-        this.character.draw();
-        this.enemy_1.draw(this.character);
-        this.enemy_2.draw(this.character);
+        if(!this.game_started) {
+            this.welcome_screen.draw();
+        } else {
+            this.map.draw(this.char_pos);
+            this.char_pos = this.character.draw();
+            this.enemy_1.draw(this.character);
+            this.enemy_2.draw(this.character);
+        }
     }
 
     setup_sprites() {
@@ -51,6 +59,14 @@ class Game {
 
     setup_keyboard() {
         this.keyboard = new Keyboard();
+    }
+
+    setup_welcome_screen() {
+        this.welcome_screen = new WelcomeScreen(this.spl, {
+            on_gamestart: () => {
+                this.game_started = true;
+            }
+        });
     }
 
     setup_map() {
@@ -73,6 +89,7 @@ class Game {
             frameRate: 1000/8,
             frame: 0
         }
+        this.game_started = false;
     }
 
     bind_stop() {

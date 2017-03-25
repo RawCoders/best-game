@@ -33,7 +33,7 @@ export default class Character {
             this.next_frame = 0;
         }
         this.action = action;
-        this.next_frame = this.spl.draw('warrior', action, pos[0], pos[1], this.next_frame);
+        this.next_frame = this.spl.draw('warrior', action, pos[0], pos[1], {frame: this.next_frame});
         return pos;
     }
 }

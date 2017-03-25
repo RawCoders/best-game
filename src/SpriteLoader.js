@@ -10,7 +10,8 @@ export default class SpriteLoader {
             'cave': 'assets/cave.png',
             'overworld': 'assets/Overworld.png',
             'warrior': 'assets/warrior.png',
-            'enemy': 'assets/enemy.png'
+            'enemy': 'assets/enemy.png',
+            'font': 'assets/font.png'
         };
         let promises = [];
         for (let img in images) {
@@ -32,10 +33,19 @@ export default class SpriteLoader {
         return this.setup_images();
     }
 
-    draw(sprite, element, canvasX, canvasY, frame = 0) {
+    draw(sprite, element, canvasX, canvasY, { frame, scale } = { frame: 0, scale: 1 }) {
         const meta = this.get_meta(sprite, element, frame);
-        this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width, meta.height);
+        this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width * scale, meta.height * scale);
         return meta.next_frame;
+    }
+
+    drawText(string, canvasX, canvasY, { scale } = { scale: 2 }) {
+        let cursor = [canvasX, canvasY];
+        for (let char of string) {
+            const meta = this.get_font_meta(char);
+            this.ctx.drawImage(this.font, meta.x, meta.y, meta.width, meta.height, cursor[0] * unit, cursor[1] * unit, meta.width * scale, meta.height * scale);
+            cursor = [cursor[0] + 1, cursor[1]];
+        }
     }
 
     get_meta(sprite, element, frame) {
@@ -43,7 +53,7 @@ export default class SpriteLoader {
         let x, y, width, height, is_animation = false, next_frame = 0;
         is_animation = typeof meta[0] !== 'number' && 'length' in meta[0];
 
-        if(is_animation) {
+        if (is_animation) {
             meta = meta[frame];
             next_frame = (frame + 1) % meta.length;
         }
@@ -56,6 +66,17 @@ export default class SpriteLoader {
         height = meta[3];
 
         return { x, y, width, height, is_animation, next_frame };
+    }
+
+    get_font_meta(char) {
+        let meta = font_json[char];
+        meta = meta.map(n => n * 8);
+        return {
+            x: meta[0],
+            y: meta[1],
+            width: meta[2],
+            height: meta[3]
+        }
     }
 }
 
@@ -148,8 +169,67 @@ const sprite_json = {
             [1, 6, 1, 2],
             [2, 6, 1, 2],
             [3, 6, 1, 2],
-        ]
+        ],
+    },
+    font: {
+        backdrop: [0, 3, 15, 5],
     }
 };
+
+const font_json = {
+    'A': [0, 0, 1, 2],
+    'a': [1, 0, 1, 2],
+    'B': [2, 0, 1, 2],
+    'b': [3, 0, 1, 2],
+    'C': [4, 0, 1, 2],
+    'c': [5, 0, 1, 2],
+    'D': [6, 0, 1, 2],
+    'd': [7, 0, 1, 2],
+    'E': [8, 0, 1, 2],
+    'e': [9, 0, 1, 2],
+    'F': [10, 0, 1, 2],
+    'f': [11, 0, 1, 2],
+    'G': [12, 0, 1, 2],
+    'g': [13, 0, 1, 2],
+    'H': [14, 0, 1, 2],
+    'h': [15, 0, 1, 2],
+    'I': [16, 0, 1, 2],
+    'i': [17, 0, 1, 2],
+    'J': [18, 0, 1, 2],
+    'j': [19, 0, 1, 2],
+    'K': [20, 0, 1, 2],
+    'k': [21, 0, 1, 2],
+    'L': [22, 0, 1, 2],
+    'l': [23, 0, 1, 2],
+    'M': [24, 0, 1, 2],
+    'm': [25, 0, 1, 2],
+    'N': [0, 2, 1, 2],
+    'n': [1, 2, 1, 2],
+    'O': [2, 2, 1, 2],
+    'o': [3, 2, 1, 2],
+    'P': [4, 2, 1, 2],
+    'p': [5, 2, 1, 2],
+    'Q': [6, 2, 1, 2],
+    'q': [7, 2, 1, 2],
+    'R': [8, 2, 1, 2],
+    'r': [9, 2, 1, 2],
+    'S': [10, 2, 1, 2],
+    's': [11, 2, 1, 2],
+    'T': [12, 2, 1, 2],
+    't': [13, 2, 1, 2],
+    'U': [14, 2, 1, 2],
+    'u': [15, 2, 1, 2],
+    'V': [16, 2, 1, 2],
+    'v': [17, 2, 1, 2],
+    'W': [18, 2, 1, 2],
+    'w': [19, 2, 1, 2],
+    'X': [20, 2, 1, 2],
+    'x': [21, 2, 1, 2],
+    'Y': [22, 2, 1, 2],
+    'y': [23, 2, 1, 2],
+    'Z': [24, 2, 1, 2],
+    'z': [25, 2, 1, 2],
+    ' ': [26, 0, 1, 2],
+}
 
 const unit = meta.unit;
