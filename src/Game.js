@@ -3,6 +3,7 @@ import Keyboard from './Keyboard';
 import SpriteLoader from './SpriteLoader';
 import Map from './Map';
 import Character from './Character';
+import Enemy from './Enemy';
 
 class Game {
     constructor() {
@@ -17,6 +18,7 @@ class Game {
             .then(() => {
                 this.setup_map();
                 this.setup_character();
+                this.setup_enemy();
                 this.start_loop();
             });
     }
@@ -36,6 +38,10 @@ class Game {
         this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
         this.map.draw(this.char_pos);
         this.char_pos = this.character.draw();
+        this.map.draw();
+        this.character.draw();
+        this.enemy_1.draw(this.character);
+        this.enemy_2.draw(this.character);
     }
 
     setup_sprites() {
@@ -55,6 +61,14 @@ class Game {
         this.character = new Character(this.spl);
     }
 
+<<<<<<< c9efc7ad2b2d00321568155fd15af67873d6e644
+=======
+    setup_enemy() {
+        this.enemy_1 = new Enemy(this.spl, [Math.floor(meta.camera[0])-2, 2], 1/2);
+        this.enemy_2 = new Enemy(this.spl, [2, Math.floor(meta.camera[1])-2], 1/4);
+    }
+    
+>>>>>>> added enemies and their movements
     setup_variables() {
         this.o = {
             canvas_height: this.canvas.height,

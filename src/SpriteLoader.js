@@ -9,7 +9,8 @@ export default class SpriteLoader {
         const images = {
             'cave': 'assets/cave.png',
             'overworld': 'assets/Overworld.png',
-            'warrior': 'assets/character.png'
+            'warrior': 'assets/warrior.png',
+            'enemy': 'assets/enemy.png'
         };
         let promises = [];
         for (let img in images) {
@@ -122,6 +123,32 @@ const sprite_json = {
             [4, 14, 1, 2],
             [6, 14, 1, 2],
         ],
+    },
+    enemy: {
+        walk_down: [
+            [0, 0, 1, 2],
+            [1, 0, 1, 2],
+            [2, 0, 1, 2],
+            [3, 0, 1, 2],
+        ],
+        walk_right: [
+            [0, 2, 1, 2],
+            [1, 2, 1, 2],
+            [2, 2, 1, 2],
+            [3, 2, 1, 2],
+        ],
+        walk_up: [
+            [0, 4, 1, 2],
+            [1, 4, 1, 2],
+            [2, 4, 1, 2],
+            [3, 4, 1, 2],
+        ],
+        walk_left: [
+            [0, 6, 1, 2],
+            [1, 6, 1, 2],
+            [2, 6, 1, 2],
+            [3, 6, 1, 2],
+        ]
     }
 };
 
