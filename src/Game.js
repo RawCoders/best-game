@@ -1,6 +1,7 @@
 import Keyboard from './Keyboard';
 import SpriteLoader from './SpriteLoader';
 import Map from './Map';
+import Character from './Character';
 
 class Game {
     constructor() {
@@ -14,6 +15,7 @@ class Game {
         this.setup_sprites()
             .then(() => {
                 this.setup_map();
+                this.setup_character();
                 this.start_loop();
             });
     }
@@ -32,6 +34,7 @@ class Game {
     draw() {
         this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
         this.map.draw();
+        this.character.draw();
     }
 
     setup_sprites() {
@@ -47,6 +50,10 @@ class Game {
         this.map = new Map(this.ctx, this.spl);
     }
 
+    setup_character() {
+        this.character = new Character(this.spl);
+    }
+    
     setup_variables() {
         this.o = {
             canvas_height: this.canvas.height,

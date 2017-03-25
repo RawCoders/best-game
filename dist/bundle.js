@@ -72,9 +72,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
-	var SpriteLoader = _interopRequire(__webpack_require__(3));
+	var SpriteLoader = _interopRequire(__webpack_require__(4));
 	
-	var Map = _interopRequire(__webpack_require__(4));
+	var Map = _interopRequire(__webpack_require__(3));
+	
+	var Character = _interopRequire(__webpack_require__(5));
 	
 	var Game = (function () {
 	    function Game() {
@@ -93,6 +95,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                this.setup_sprites().then(function () {
 	                    _this.setup_map();
+	                    _this.setup_character();
 	                    _this.start_loop();
 	                });
 	            }
@@ -114,6 +117,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value: function draw() {
 	                this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
 	                this.map.draw();
+	                this.character.draw();
 	            }
 	        },
 	        setup_sprites: {
@@ -130,6 +134,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        setup_map: {
 	            value: function setup_map() {
 	                this.map = new Map(this.ctx, this.spl);
+	            }
+	        },
+	        setup_character: {
+	            value: function setup_character() {
+	                this.character = new Character(this.spl);
 	            }
 	        },
 	        setup_variables: {
@@ -223,6 +232,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
+	var Map = (function () {
+	    function Map(ctx, spl) {
+	        _classCallCheck(this, Map);
+	
+	        this.spl = spl;
+	    }
+	
+	    _createClass(Map, {
+	        draw: {
+	            value: function draw() {
+	                this.spl.draw("overworld", "grass", 0, 0);
+	            }
+	        }
+	    });
+	
+	    return Map;
+	})();
+	
+	module.exports = Map;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
 	var SpriteLoader = (function () {
 	    function SpriteLoader(ctx) {
 	        _classCallCheck(this, SpriteLoader);
@@ -237,7 +276,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                var images = {
 	                    cave: "assets/cave.png",
-	                    overworld: "assets/Overworld.png" };
+	                    overworld: "assets/Overworld.png",
+	                    warrior: "assets/character.png"
+	                };
 	                var promises = [];
 	                for (var img in images) {
 	                    (function (img) {
@@ -246,7 +287,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                        var promise = new Promise(function (resolve, reject) {
 	                            _this[img].onload = function () {
-	                                console.log(img, "ready");
 	                                resolve(img);
 	                            };
 	                        });
@@ -263,9 +303,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        },
 	        draw: {
-	            value: function draw(sprite, element, canvasX, canvasY) {
+	            value: function draw(sprite, element, canvasX, canvasY, frame) {
 	                var meta = this.get_meta(sprite, element);
-	                this.ctx.drawImage(this.overworld, meta[0], meta[1], meta[2], meta[3], canvasX * unit, canvasY * unit, unit, unit);
+	                var x = undefined,
+	                    y = undefined,
+	                    width = undefined,
+	                    height = undefined;
+	                if (typeof meta[0] !== "number" && "length" in meta[0]) {
+	                    x = meta[frame][0];
+	                    y = meta[frame][1];
+	                    width = meta[frame][2];
+	                    height = meta[frame][3];
+	                } else {
+	                    x = meta[0];
+	                    y = meta[1];
+	                    width = meta[2];
+	                    height = meta[3];
+	                }
+	                this.ctx.drawImage(this[sprite], x, y, width, height, canvasX * unit, canvasY * unit, unit, unit);
+	                console.log(this[sprite]);
+	                return frame + 1;
 	            }
 	        },
 	        get_meta: {
@@ -288,13 +345,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    overworld: {
 	        grass: [0, 0, 1, 1],
 	        water_waving: [[0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]]
-	    }
+	    },
+	    warrior: {
+	        walk_down: [[0, 0, 1, 2], [1, 0, 1, 2], [2, 0, 1, 2], [3, 0, 1, 2]],
+	        walk_right: [[0, 2, 1, 2], [1, 2, 1, 2], [2, 2, 1, 2], [3, 2, 1, 2]],
+	        walk_up: [[0, 4, 1, 2], [1, 4, 1, 2], [2, 4, 1, 2], [3, 4, 1, 2]],
+	        walk_left: [[0, 6, 1, 2], [1, 6, 1, 2], [2, 6, 1, 2], [3, 6, 1, 2]],
+	        attack_down: [[0, 8, 1, 2], [2, 8, 1, 2], [4, 8, 1, 2], [6, 8, 1, 2]],
+	        attack_up: [[0, 10, 1, 2], [2, 10, 1, 2], [4, 10, 1, 2], [6, 10, 1, 2]],
+	        attack_left: [[0, 12, 1, 2], [2, 12, 1, 2], [4, 12, 1, 2], [6, 12, 1, 2]],
+	        attack_right: [[0, 14, 1, 2], [2, 14, 1, 2], [4, 14, 1, 2], [6, 14, 1, 2]] }
 	};
 	
 	var unit = 16;
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -303,26 +369,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var Map = (function () {
-	    function Map(ctx, spl) {
-	        _classCallCheck(this, Map);
+	var Character = (function () {
+	    function Character(spl) {
+	        _classCallCheck(this, Character);
 	
-	        this.ctx = ctx;
 	        this.spl = spl;
+	        this.next_frame = 0;
 	    }
 	
-	    _createClass(Map, {
+	    _createClass(Character, {
 	        draw: {
 	            value: function draw() {
-	                this.spl.draw("overworld", "grass", 0, 0);
+	                this.next_frame = this.spl.draw("warrior", "walk_left", 16, 16, this.next_frame);
 	            }
 	        }
 	    });
 	
-	    return Map;
+	    return Character;
 	})();
 	
-	module.exports = Map;
+	module.exports = Character;
 
 /***/ }
 /******/ ])

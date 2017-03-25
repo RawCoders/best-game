@@ -1,6 +1,5 @@
 export default class Map {
     constructor(ctx, spl) {
-        this.ctx = ctx;
         this.spl = spl;
     }
 
