@@ -13,20 +13,53 @@ export default class Enemy extends Character {
     update_values(character) {
         let pos = this.pos;
         let speed = this.speed;
-        if (character.pos[1] < pos[1]) {
-            pos[1] = pos[1] - speed * 1;
-            this.action = 'walk_up';
-        } else if (character.pos[1] > pos[1]) {
-            pos[1] = pos[1] + speed * 1;
-            this.action = 'walk_down';
-        } else if (character.pos[0] < pos[0]) {
-            pos[0] = pos[0] - speed * 1;
-            this.action = 'walk_left';
-        } else if (character.pos[0] > pos[0]) {
-            pos[0] = pos[0] + speed * 1;
-            this.action = 'walk_right';
-        } else {
-            this.next_frame = 0;
+
+        function character_in_range() {
+            let range_x = 8;
+            let range_y = 6;
+            let returnValue = false;
+
+            function in_x_range() {
+                if ((pos[0] + range_x >= character.pos[0] && character.pos[0] >= pos[0]) ||
+                    (pos[0] - range_x <= character.pos[0] && character.pos[0] <= pos[0])) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            function in_y_range() {
+                if ((pos[1] + range_y >= character.pos[1] && character.pos[1] >= pos[1]) ||
+                    (pos[1] - range_y <= character.pos[1] && character.pos[1] <= pos[1])) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            if (in_x_range() && in_y_range()) {
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+        if (character_in_range()) {
+            if (character.pos[1] < pos[1]) {
+                pos[1] = pos[1] - speed * 1;
+                this.action = 'walk_up';
+            } else if (character.pos[1] > pos[1]) {
+                pos[1] = pos[1] + speed * 1;
+                this.action = 'walk_down';
+            } else if (character.pos[0] < pos[0]) {
+                pos[0] = pos[0] - speed * 1;
+                this.action = 'walk_left';
+            } else if (character.pos[0] > pos[0]) {
+                pos[0] = pos[0] + speed * 1;
+                this.action = 'walk_right';
+            } else {
+                this.next_frame = 0;
+            }
         }
     }
 
