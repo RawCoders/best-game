@@ -45,9 +45,11 @@ class Game {
 
     draw() {
         this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
-        if(!this.game_started) {
+        if (!this.game_started) {
             this.welcome_screen.draw();
         } else {
+            this.reset_obstacles();
+
             this.map.draw(this.char_pos);
 
             this.warrior.name = this.player_name;
@@ -59,7 +61,7 @@ class Game {
                 next_frame: this.warrior.next_frame
             });
 
-            if(this.other_players.length > 0) {
+            if (this.other_players.length > 0) {
                 this.other_players.forEach(player => {
                     player.draw();
                 });
@@ -87,7 +89,7 @@ class Game {
 
                 this.socket.emit('new_client', {
                     name: player_name,
-                    pos: [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)]
+                    pos: [Math.floor(meta.camera[0] / 2), Math.floor(meta.camera[1] / 2)]
                 });
             }
         });
@@ -100,21 +102,21 @@ class Game {
     setup_warrior() {
         this.warrior = new Warrior(
             this.spl,
-            [Math.floor(meta.map[0]/2), Math.floor(meta.map[1]/2)],
+            [Math.floor(meta.map[0] / 2), Math.floor(meta.map[1] / 2)],
             this.player_name
         );
     }
 
     setup_enemy() {
-        this.enemy_1 = new Enemy(this.spl, [Math.floor(meta.camera[0])-2, 2], 1/2);
-        this.enemy_2 = new Enemy(this.spl, [2, Math.floor(meta.camera[1])-2], 1/4);
+        this.enemy_1 = new Enemy(this.spl, [Math.floor(meta.map[0]) - 2, 2], 1/2);
+        this.enemy_2 = new Enemy(this.spl, [2, Math.floor(meta.map[1]) - 2], 1/2);
     }
 
     setup_variables() {
         this.o = {
             canvas_height: this.canvas.height,
             canvas_width: this.canvas.width,
-            frameRate: 1000/8,
+            frameRate: 1000 / 8,
             frame: 0
         }
         this.game_started = false;
@@ -137,7 +139,7 @@ class Game {
 
     update_other_player(player_info) {
         const player = this.other_players.find(player => player_info.name === player.name);
-        if(player) {
+        if (player) {
             player.update_values(player_info.pos, player_info.action, player_info.next_frame);
         }
     }
@@ -146,6 +148,16 @@ class Game {
         document.getElementById('stop').addEventListener('click', () => {
             clearInterval(this.game_loop);
         });
+    }
+
+    reset_obstacles() {
+        window.obstacles = [];
+        for (let i = 0; i < meta.map[0]; i++) {
+            window.obstacles[i] = [];
+            for (let j = 0; j < meta.map[1]; j++) {
+                window.obstacles[i][j] = 0;
+            }
+        }
     }
 }
 
