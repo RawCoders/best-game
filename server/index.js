@@ -5,6 +5,8 @@ var io = require('socket.io')(server);
 var p = require('path').resolve;
 server.listen(process.env.PORT || 9878);
 
+console.log('<<<<<<listening on ', process.env.PORT);
+
 app.use(express.static('.'))
 
 app.get('/', function (req, res) {
