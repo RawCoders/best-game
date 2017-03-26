@@ -23,3 +23,7 @@ Screenshots
 Resources
 ----------
 [Zelda like tilesets and sprites](opengameart.org/content/zelda-like-tilesets-and-sprites)
+
+Live demo
+----------
+[best-game](https://best--game.herokuapp.com/)
