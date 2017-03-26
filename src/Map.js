@@ -11,8 +11,6 @@ export default class Map {
         this.map_width = meta.map[0];
         this.map_height = meta.map[1];
 
-        this.camera_top_x = 0;
-        this.camera_top_y = 0;
         this.camera_top_x = Math.floor((this.map_width - this.camera_width)/2);
         this.camera_top_y = Math.floor((this.map_height - this.camera_height)/2);
         this.keyboard = new Keyboard();
@@ -21,7 +19,8 @@ export default class Map {
 
     draw(char_pos) {
         if(char_pos) {
-            const [x, y] = char_pos;
+
+            const [x, y] = [char_pos[0] - window.camera[0], char_pos[1] - window.camera[1]];
             if(x < this.camera_width/4 && this.keyboard.left_pressed) {
                 this.camera_top_x -= 1;
                 if(this.camera_top_x < 0)
@@ -47,6 +46,8 @@ export default class Map {
                     this.camera_top_y = this.map_height - this.camera_height;
             }
         }
+
+        window.camera = [this.camera_top_x, this.camera_top_y];
 
         this.render_camera(this.camera_top_x, this.camera_top_y);
     }

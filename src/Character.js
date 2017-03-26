@@ -17,6 +17,6 @@ export default class Character {
 
     draw() {
         this.update_values();
-        this.next_frame = this.spl.draw(this.sprite, this.action, this.pos[0], this.pos[1], {frame:this.next_frame});
+        this.next_frame = this.spl.draw_on_map(this.sprite, this.action, this.pos[0], this.pos[1], {frame:this.next_frame});
     }
 }

@@ -100,7 +100,7 @@ class Game {
     setup_warrior() {
         this.warrior = new Warrior(
             this.spl,
-            [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)],
+            [Math.floor(meta.map[0]/2), Math.floor(meta.map[1]/2)],
             this.player_name
         );
     }

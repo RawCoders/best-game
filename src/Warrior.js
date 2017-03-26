@@ -23,7 +23,7 @@ export default class Warrior extends Character {
             this.action = 'walk_up';
         } else if (this.keyboard.down_pressed) {
             pos[1] = pos[1] + 1;
-            if (pos[1] > meta.camera[1] - 2) pos[1] = meta.camera[1] - 2;
+            if (pos[1] > meta.map[1] - 2) pos[1] = meta.map[1] - 2;
 
             this.action = 'walk_down';
         } else if (this.keyboard.left_pressed) {
@@ -33,7 +33,7 @@ export default class Warrior extends Character {
             this.action = 'walk_left';
         } else if (this.keyboard.right_pressed) {
             pos[0] = pos[0] + 1;
-            if (pos[0] > meta.camera[0] - 1) pos[0] = meta.camera[0] - 1;
+            if (pos[0] > meta.map[0] - 1) pos[0] = meta.map[0] - 1;
 
             this.action = 'walk_right';
         } else {
@@ -43,7 +43,9 @@ export default class Warrior extends Character {
 
     draw_name() {
         const name = this.name;
-        this.spl.drawText(name, this.pos[0] * 2 - name.length/2 + 1, (this.pos[1] - 1) * 2, { scale:1 });
+        // clean this up later
+        const [canvas_x, canvas_y] = [this.pos[0] - window.camera[0], this.pos[1] - window.camera[1]];
+        this.spl.drawText(name, canvas_x * 2 - name.length/2 + 1, (canvas_y - 1) * 2, { scale:1 });
     }
 
     draw() {

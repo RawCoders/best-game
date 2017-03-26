@@ -51,6 +51,14 @@ export default class SpriteLoader {
         return meta.next_frame;
     }
 
+    draw_on_map(sprite, element, mapX, mapY, {frame=0, scale=1} = {}) {
+        const canvasX = mapX - window.camera[0];
+        const canvasY = mapY - window.camera[1];
+        const meta = this.get_meta(sprite, element, frame);
+        this.ctx.drawImage(this[sprite], meta.x, meta.y, meta.width, meta.height, canvasX * unit, canvasY * unit, meta.width * scale, meta.height * scale);
+        return meta.next_frame;
+    }
+
     drawText(string, canvasX, canvasY, {scale=1} = {}) {
         let cursor = [canvasX, canvasY];
         let unit = font_unit * scale;
