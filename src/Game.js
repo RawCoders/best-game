@@ -3,14 +3,17 @@ import Keyboard from './Keyboard';
 import SpriteLoader from './SpriteLoader';
 import Map from './Map';
 import Warrior from './Warrior';
+import OtherWarrior from './OtherWarrior';
 import Enemy from './Enemy';
 import WelcomeScreen from './WelcomeScreen';
+import io from 'socket.io-client';
 
 class Game {
     constructor() {
         this.setup_canvas();
         this.setup_variables();
         this.setup_keyboard();
+        this.setup_socket();
         this.bind_stop();
     }
 
@@ -46,7 +49,22 @@ class Game {
             this.welcome_screen.draw();
         } else {
             this.map.draw(this.char_pos);
+
+            this.warrior.name = this.player_name;
             this.char_pos = this.warrior.draw();
+            this.socket.emit('other_player_update_value', {
+                name: this.warrior.name,
+                pos: this.warrior.pos,
+                action: this.warrior.action,
+                next_frame: this.warrior.next_frame
+            });
+
+            if(this.other_players.length > 0) {
+                this.other_players.forEach(player => {
+                    player.draw();
+                });
+            }
+
             this.enemy_1.draw(this.warrior);
             this.enemy_2.draw(this.warrior);
         }
@@ -63,8 +81,14 @@ class Game {
 
     setup_welcome_screen() {
         this.welcome_screen = new WelcomeScreen(this.spl, {
-            on_gamestart: () => {
+            on_gamestart: (player_name) => {
+                this.player_name = player_name;
                 this.game_started = true;
+
+                this.socket.emit('new_client', {
+                    name: player_name,
+                    pos: [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)]
+                });
             }
         });
     }
@@ -77,7 +101,7 @@ class Game {
         this.warrior = new Warrior(
             this.spl,
             [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)],
-            'netchamp'
+            this.player_name
         );
     }
 
@@ -94,6 +118,28 @@ class Game {
             frame: 0
         }
         this.game_started = false;
+        this.other_players = [];
+    }
+
+    setup_socket() {
+        this.socket = io.connect('http://localhost:9878');
+        this.socket.on('player_joined', (player) => {
+            console.log(player, 'joined');
+
+            this.other_players.push(new OtherWarrior(this.spl, player.pos, player.name));
+        });
+
+        this.socket.on('other_player_update_value_from_server', player_info => {
+            // console.log(player_info, 'moved');
+            this.update_other_player(player_info);
+        });
+    }
+
+    update_other_player(player_info) {
+        const player = this.other_players.find(player => player_info.name === player.name);
+        if(player) {
+            player.update_values(player_info.pos, player_info.action, player_info.next_frame);
+        }
     }
 
     bind_stop() {

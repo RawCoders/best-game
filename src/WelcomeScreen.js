@@ -18,7 +18,8 @@ export default class WelcomeScreen {
         this.curr_frame = (this.curr_frame + 1) % 8;
 
         this.keyboard.on_keyup_space = () => {
-            this.on_gamestart();
+            const player_name = prompt('Enter your name');
+            this.on_gamestart(player_name);
         }
 
         return this.space_pressed;

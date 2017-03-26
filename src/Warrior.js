@@ -10,7 +10,7 @@ export default class Warrior extends Character {
         this.sprite = 'warrior';
         this.action = 'walk_down';
 
-        this.name = name;
+        this.name = name || 'player one';
     }
 
     update_values() {
