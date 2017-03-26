@@ -4,8 +4,9 @@
   "description": "best game",
   "main": "index.js",
   "scripts": {
-    "start": "script/build",
+    "start": "node server/index.js",
     "start-server": "node server/index.js",
+    "start-build": "script/build",
     "serve": "script/watch",
     "test": "jest"
   },
