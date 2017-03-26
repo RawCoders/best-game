@@ -22,7 +22,7 @@ Screenshots
 
 Resources
 ----------
-[Zelda like tilesets and sprites](opengameart.org/content/zelda-like-tilesets-and-sprites)
+[Zelda like tilesets and sprites](http://opengameart.org/content/zelda-like-tilesets-and-sprites)
 
 Live demo
 ----------
