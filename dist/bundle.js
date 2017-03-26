@@ -229,7 +229,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                });
 	
 	                this.socket.on("other_player_update_value_from_server", function (player_info) {
-	                    // console.log(player_info, 'moved');
 	                    _this.update_other_player(player_info);
 	                });
 	            }
@@ -528,7 +527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        get_font_meta: {
 	            value: function get_font_meta(char) {
-	                var meta = font_json[char];
+	                var meta = font_json[char] || font_json["."];
 	                meta = meta.map(function (n) {
 	                    return n * font_unit;
 	                });
@@ -638,7 +637,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    y: [23, 2, 1, 2],
 	    Z: [24, 2, 1, 2],
 	    z: [25, 2, 1, 2],
-	    " ": [26, 0, 1, 2] };
+	    " ": [26, 0, 1, 2],
+	    "0": [27, 0, 1, 1],
+	    "1": [28, 0, 1, 1],
+	    "2": [29, 0, 1, 1],
+	    "3": [27, 1, 1, 1],
+	    "4": [28, 1, 1, 1],
+	    "5": [29, 1, 1, 1],
+	    "6": [27, 2, 1, 1],
+	    "7": [28, 2, 1, 1],
+	    "8": [29, 2, 1, 1],
+	    "9": [28, 3, 1, 1],
+	    ".": [0, 4, 1, 2] };
 	
 	var unit = meta.unit;
 	var font_unit = 8;
@@ -959,8 +969,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        is_near_enemy: {
 	            value: function is_near_enemy() {
 	                var nearby = [[[-1, -1], [0, -1], [1, -1]], [[-1, 0], [0, 0], [1, 0]], [[-1, 1], [0, 1], [1, 1]]];
-	
-	                console.log(this.pos[0] + 1, this.pos[1] + 0, window.enemy[this.pos[0] + 1][this.pos[1] + 0]);
 	
 	                if (window.enemy[this.pos[0] + 1][this.pos[1] + 0]) {
 	                    return true;
