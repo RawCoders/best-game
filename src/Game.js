@@ -132,7 +132,6 @@ class Game {
         });
 
         this.socket.on('other_player_update_value_from_server', player_info => {
-            // console.log(player_info, 'moved');
             this.update_other_player(player_info);
         });
     }

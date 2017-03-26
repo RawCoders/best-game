@@ -90,7 +90,7 @@ export default class SpriteLoader {
     }
 
     get_font_meta(char) {
-        let meta = font_json[char];
+        let meta = font_json[char] || font_json['.'];
         meta = meta.map(n => n * font_unit);
         return {
             x: meta[0],
@@ -265,6 +265,17 @@ const font_json = {
     'Z': [24, 2, 1, 2],
     'z': [25, 2, 1, 2],
     ' ': [26, 0, 1, 2],
+    '0': [27, 0, 1, 1],
+    '1': [28, 0, 1, 1],
+    '2': [29, 0, 1, 1],
+    '3': [27, 1, 1, 1],
+    '4': [28, 1, 1, 1],
+    '5': [29, 1, 1, 1],
+    '6': [27, 2, 1, 1],
+    '7': [28, 2, 1, 1],
+    '8': [29, 2, 1, 1],
+    '9': [28, 3, 1, 1],
+    '.': [0, 4, 1, 2],
 }
 
 const unit = meta.unit;

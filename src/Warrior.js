@@ -58,8 +58,6 @@ export default class Warrior extends Character {
             [[-1, 1], [0, 1], [1, 1]],
         ];
 
-        console.log(this.pos[0] + 1, this.pos[1] + 0, window.enemy[this.pos[0] + 1][this.pos[1] + 0]);
-
         if(window.enemy[this.pos[0] + 1][this.pos[1] + 0]) {
             return true;
         }
