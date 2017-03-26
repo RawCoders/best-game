@@ -117,8 +117,8 @@ const sprite_json = {
         green_patch_3: [11, 28, 2, 1],
         green_patch_4: [13, 28, 1, 1],
         house_1: [6, 0, 5, 5],
-        house_2: [],
-        tower:[],
+        house_2: [5, 13, 2, 3],
+        tower:[0, 21, 3, 8],
         water_waving: [
             [0, 1, 1, 1],
             [1, 1, 1, 1],
