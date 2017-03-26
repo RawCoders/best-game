@@ -3,7 +3,7 @@ var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var p = require('path').resolve;
-server.listen(8080);
+server.listen(process.env.PORT || 9878);
 
 app.use(express.static('.'))
 
