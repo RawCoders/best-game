@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "script/build",
+    "start-server": "node server/index.js",
     "serve": "script/watch",
     "test": "jest"
   },
