@@ -168,7 +168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        setup_warrior: {
 	            value: function setup_warrior() {
-	                this.warrior = new Warrior(this.spl, [Math.floor(meta.camera[0] / 2), Math.floor(meta.camera[1] / 2)]);
+	                this.warrior = new Warrior(this.spl, [Math.floor(meta.camera[0] / 2), Math.floor(meta.camera[1] / 2)], "netchamp");
 	            }
 	        },
 	        setup_enemy: {
@@ -294,6 +294,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        this.camera_top_x = 0;
 	        this.camera_top_y = 0;
+	        this.camera_top_x = Math.floor((this.map_width - this.camera_width) / 2);
+	        this.camera_top_y = Math.floor((this.map_height - this.camera_height) / 2);
 	        this.keyboard = new Keyboard();
 	        this.generate_map();
 	    }
@@ -348,9 +350,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	
 	                var terrain_objects = ["yellow_patch", "blue_patch", "green_patch_1", "green_patch_2", "green_patch_3", "green_patch_4"];
+	                var obstacles = ["house_1"];
 	
 	                var frequencies = {
-	                    area12: [6, 7],
+	                    area25: [2, 3],
+	
 	                    area9: [15, 16, 17],
 	                    area6: [19, 20, 21],
 	                    area4: [24, 25, 26],
@@ -359,7 +363,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                terrain_objects.forEach(function (object) {
 	                    var meta = _this.spl.get_sprite_size("overworld", object);
-	                    var frequency = frequencies["area" + meta.width * meta.height][0]; // [0]:first for now, make random later
+	                    var freq_list = frequencies["area" + meta.width * meta.height];
+	                    var frequency = freq_list[Math.floor(Math.random() * freq_list.length)];
 	
 	                    for (var i = 0; i < frequency; i++) {
 	                        var _get_random_start_position = get_random_start_position(meta.width, meta.height);
@@ -385,11 +390,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                    for (var i = x; i < x + width; i++) {
 	                        for (var j = y; j < y + height; j++) {
-	                            if (i === x && j === y) {
-	                                me.map[i][j] = object;
-	                            } else {
-	                                me.map[i][j] = 1;
-	                            }
+	                            me.map[i][j] = [object, i - x, j - y];
 	                        }
 	                    }
 	                }
@@ -412,12 +413,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                for (var i = 0; i < this.camera_width; i++) {
 	                    for (var j = 0; j < this.camera_height; j++) {
-	                        if (camera[i][j] === 1) {
-	                            continue;
-	                        } else if (camera[i][j] === 0) {
+	                        if (camera[i][j] === 0) {
 	                            this.spl.draw("overworld", "grass", i, j);
 	                        } else {
-	                            this.spl.draw("overworld", camera[i][j], i, j);
+	                            // this.spl.draw("overworld", camera[i][j], i, j);
+	                            this.spl.draw_constrained("overworld", camera[i][j][0], camera[i][j][1], camera[i][j][2], i, j);
 	                        }
 	                    }
 	                }
@@ -500,14 +500,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return meta.next_frame;
 	            }
 	        },
+	        draw_constrained: {
+	            value: function draw_constrained(sprite, element, elementX, elementY, canvasX, canvasY) {
+	                var _ref = arguments[6] === undefined ? {} : arguments[6];
+	
+	                var _ref$frame = _ref.frame;
+	                var frame = _ref$frame === undefined ? 0 : _ref$frame;
+	                var _ref$scale = _ref.scale;
+	                var scale = _ref$scale === undefined ? 1 : _ref$scale;
+	
+	                var meta = this.get_meta(sprite, element, frame);
+	                var startX = meta.x + elementX * unit;
+	                var startY = meta.y + elementY * unit;
+	
+	                var width = meta.width - elementX * unit;
+	                var height = meta.height - elementY * unit;
+	
+	                this.ctx.drawImage(this[sprite], startX, startY, width, height, canvasX * unit, canvasY * unit, width * scale, height * scale);
+	                return meta.next_frame;
+	            }
+	        },
 	        drawText: {
 	            value: function drawText(string, canvasX, canvasY) {
 	                var _ref = arguments[3] === undefined ? {} : arguments[3];
 	
 	                var _ref$scale = _ref.scale;
-	                var scale = _ref$scale === undefined ? 2 : _ref$scale;
+	                var scale = _ref$scale === undefined ? 1 : _ref$scale;
 	
 	                var cursor = [canvasX, canvasY];
+	                var unit = font_unit * scale;
 	                var _iteratorNormalCompletion = true;
 	                var _didIteratorError = false;
 	                var _iteratorError = undefined;
@@ -570,7 +591,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value: function get_font_meta(char) {
 	                var meta = font_json[char];
 	                meta = meta.map(function (n) {
-	                    return n * 8;
+	                    return n * font_unit;
 	                });
 	                return {
 	                    x: meta[0],
@@ -603,6 +624,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        green_patch_2: [9, 27, 2, 2],
 	        green_patch_3: [11, 28, 2, 1],
 	        green_patch_4: [13, 28, 1, 1],
+	        house_1: [6, 0, 5, 5],
+	        house_2: [],
+	        tower: [],
 	        water_waving: [[0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]] },
 	    warrior: {
 	        walk_down: [[0, 0, 1, 2], [1, 0, 1, 2], [2, 0, 1, 2], [3, 0, 1, 2]],
@@ -678,6 +702,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    " ": [26, 0, 1, 2] };
 	
 	var unit = meta.unit;
+	var font_unit = 8;
 
 /***/ },
 /* 5 */
@@ -764,7 +789,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Keyboard = _interopRequire(__webpack_require__(2));
 	
 	var Warrior = (function (_Character) {
-	    function Warrior(spl, initial_position) {
+	    function Warrior(spl, initial_position, name) {
 	        _classCallCheck(this, Warrior);
 	
 	        _get(Object.getPrototypeOf(Warrior.prototype), "constructor", this).call(this, spl, initial_position);
@@ -772,6 +797,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.keyboard = new Keyboard();
 	        this.sprite = "warrior";
 	        this.action = "walk_down";
+	
+	        this.name = name;
 	    }
 	
 	    _inherits(Warrior, _Character);
@@ -806,9 +833,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        },
+	        draw_name: {
+	            value: function draw_name() {
+	                var name = this.name;
+	                this.spl.drawText(name, this.pos[0] * 2 - name.length / 2 + 1, (this.pos[1] - 1) * 2, { scale: 1 });
+	            }
+	        },
 	        draw: {
 	            value: function draw() {
 	                _get(Object.getPrototypeOf(Warrior.prototype), "draw", this).call(this);
+	                this.draw_name();
 	                return this.pos;
 	            }
 	        }
@@ -829,25 +863,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
+	var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+	
+	var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
 	var meta = _interopRequire(__webpack_require__(5));
 	
-	var Enemy = (function () {
+	var Character = _interopRequire(__webpack_require__(6));
+	
+	var Enemy = (function (_Character) {
 	    function Enemy(spl, pos, speed) {
 	        _classCallCheck(this, Enemy);
 	
-	        this.spl = spl;
-	        this.next_frame = 0;
-	        this.pos = pos;
+	        _get(Object.getPrototypeOf(Enemy.prototype), "constructor", this).call(this, spl, pos);
+	
+	        this.sprite = "enemy";
 	        this.action = "walk_down";
 	        this.speed = speed;
 	    }
 	
+	    _inherits(Enemy, _Character);
+	
 	    _createClass(Enemy, {
-	        draw: {
-	            value: function draw(character) {
-	                var action = this.action;
+	        update_values: {
+	            value: function update_values(character) {
 	                var pos = this.pos;
 	                var speed = this.speed;
 	
@@ -877,31 +918,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        return false;
 	                    }
 	                }
+	
 	                if (character_in_range()) {
 	                    if (character.pos[1] < pos[1]) {
 	                        pos[1] = pos[1] - speed * 1;
-	                        action = "walk_up";
+	                        this.action = "walk_up";
 	                    } else if (character.pos[1] > pos[1]) {
 	                        pos[1] = pos[1] + speed * 1;
-	                        action = "walk_down";
+	                        this.action = "walk_down";
 	                    } else if (character.pos[0] < pos[0]) {
 	                        pos[0] = pos[0] - speed * 1;
-	                        action = "walk_left";
+	                        this.action = "walk_left";
 	                    } else if (character.pos[0] > pos[0]) {
 	                        pos[0] = pos[0] + speed * 1;
-	                        action = "walk_right";
+	                        this.action = "walk_right";
 	                    } else {
 	                        this.next_frame = 0;
 	                    }
-	                    this.action = action;
 	                }
-	                this.next_frame = this.spl.draw("enemy", action, pos[0], pos[1], this.next_frame);
+	            }
+	        },
+	        draw: {
+	            value: function draw(character) {
+	                this.update_values = this.update_values.bind(this, character);
+	                _get(Object.getPrototypeOf(Enemy.prototype), "draw", this).call(this);
 	            }
 	        }
 	    });
 	
 	    return Enemy;
-	})();
+	})(Character);
 	
 	module.exports = Enemy;
 

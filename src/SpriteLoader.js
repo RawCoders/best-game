@@ -39,6 +39,18 @@ export default class SpriteLoader {
         return meta.next_frame;
     }
 
+    draw_constrained(sprite, element, elementX, elementY, canvasX, canvasY, {frame=0, scale=1} = {}) {
+        const meta = this.get_meta(sprite, element, frame);
+        let startX = meta.x + elementX*unit;
+        let startY = meta.y + elementY*unit;
+
+        let width = meta.width - elementX*unit;
+        let height = meta.height - elementY*unit;
+
+        this.ctx.drawImage(this[sprite], startX, startY, width, height, canvasX * unit, canvasY * unit, width * scale, height * scale);
+        return meta.next_frame;
+    }
+
     drawText(string, canvasX, canvasY, {scale=1} = {}) {
         let cursor = [canvasX, canvasY];
         let unit = font_unit * scale;
@@ -96,6 +108,9 @@ const sprite_json = {
         green_patch_2: [9, 27, 2, 2],
         green_patch_3: [11, 28, 2, 1],
         green_patch_4: [13, 28, 1, 1],
+        house_1: [6, 0, 5, 5],
+        house_2: [],
+        tower:[],
         water_waving: [
             [0, 1, 1, 1],
             [1, 1, 1, 1],

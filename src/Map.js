@@ -13,6 +13,8 @@ export default class Map {
 
         this.camera_top_x = 0;
         this.camera_top_y = 0;
+        this.camera_top_x = Math.floor((this.map_width - this.camera_width)/2);
+        this.camera_top_y = Math.floor((this.map_height - this.camera_height)/2);
         this.keyboard = new Keyboard();
         this.generate_map();
     }
@@ -63,9 +65,11 @@ export default class Map {
         }
 
         let terrain_objects = ['yellow_patch', 'blue_patch', 'green_patch_1', 'green_patch_2', 'green_patch_3', 'green_patch_4'];
+        let obstacles = ['house_1'];
 
         let frequencies = {
-            area12: [6,7],
+            area25: [2,3],
+
             area9: [15,16,17],
             area6: [19, 20, 21],
             area4: [24, 25, 26],
@@ -75,7 +79,8 @@ export default class Map {
 
         terrain_objects.forEach((object) => {
             const meta = this.spl.get_sprite_size('overworld', object);
-            let frequency = frequencies['area'+(meta.width * meta.height)][0];   // [0]:first for now, make random later
+            let freq_list = frequencies['area'+(meta.width * meta.height)]
+            let frequency = freq_list[Math.floor(Math.random() * freq_list.length)];
 
             for(var i = 0; i < frequency; i++){
                 var [rand_x, rand_y] = get_random_start_position(meta.width, meta.height);
@@ -95,11 +100,7 @@ export default class Map {
 
             for (var i = x; i < x + width; i++) {
                 for (var j = y; j < y + height; j++) {
-                    if(i === x && j === y) {
-                        me.map[i][j] = object;
-                    } else {
-                        me.map[i][j] = 1;
-                    }
+                    me.map[i][j] = [object, i-x, j-y];
                 }
             }
         }
@@ -122,14 +123,12 @@ export default class Map {
 
         for (var i = 0; i < this.camera_width; i++) {
             for (var j = 0; j < this.camera_height; j++) {
-                if(camera[i][j] === 1) {
-                    continue;
-                } else if (camera[i][j] === 0) {
+                if (camera[i][j] === 0) {
                     this.spl.draw("overworld", 'grass', i, j);
                 } else {
-                    this.spl.draw("overworld", camera[i][j], i, j);
+                    // this.spl.draw("overworld", camera[i][j], i, j);
+                    this.spl.draw_constrained("overworld", camera[i][j][0], camera[i][j][1], camera[i][j][2], i, j);
                 }
-
             }
         }
     }
