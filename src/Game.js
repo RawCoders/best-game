@@ -124,7 +124,7 @@ class Game {
     }
 
     setup_socket() {
-        this.socket = io.connect('http://localhost:9878');
+        this.socket = io.connect(window.location.href);
         this.socket.on('player_joined', (player) => {
             console.log(player, 'joined');
 
@@ -156,6 +156,14 @@ class Game {
             window.obstacles[i] = [];
             for (let j = 0; j < meta.map[1]; j++) {
                 window.obstacles[i][j] = 0;
+            }
+        }
+
+        window.enemy = [];
+        for (let i = 0; i < meta.map[0]; i++) {
+            window.enemy[i] = [];
+            for (let j = 0; j < meta.map[1]; j++) {
+                window.enemy[i][j] = 0;
             }
         }
     }

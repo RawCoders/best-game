@@ -6,6 +6,7 @@ export default class Character {
 
         this.next_frame = 0;
         this.pos = inital_position;
+        this.hp = 0;
         this.sprite = 'override_me';
         // this.pos = [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)];
         this.action = 'walk_down';

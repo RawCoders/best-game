@@ -9,6 +9,7 @@ export default class Warrior extends Character {
         this.keyboard = new Keyboard();
         this.sprite = 'warrior';
         this.action = 'walk_down';
+        this.hp = 100;
 
         this.name = name || 'player one';
     }
@@ -36,6 +37,8 @@ export default class Warrior extends Character {
             if (pos[0] > meta.map[0] - 1) pos[0] = meta.map[0] - 1;
 
             this.action = 'walk_right';
+        } else if(this.is_near_enemy() && this.facing_enemy()){
+            console.log('enemy here')
         } else {
             this.next_frame = 0;
         }
@@ -48,9 +51,38 @@ export default class Warrior extends Character {
         this.spl.drawText(name, canvas_x * 2 - name.length/2 + 1, (canvas_y - 1) * 2, { scale:1 });
     }
 
+    is_near_enemy() {
+        const nearby = [
+            [[-1, -1], [0, -1], [1, -1]],
+            [[-1, 0], [0, 0], [1, 0]],
+            [[-1, 1], [0, 1], [1, 1]],
+        ];
+
+        console.log(this.pos[0] + 1, this.pos[1] + 0, window.enemy[this.pos[0] + 1][this.pos[1] + 0]);
+
+        if(window.enemy[this.pos[0] + 1][this.pos[1] + 0]) {
+            return true;
+        }
+
+        for(let row of nearby) {
+            for(let col of row) {
+                const tile = [this.pos[0] + col[0], this.pos[1] + col[1]];
+                if(window.enemy[tile[0]][tile[1]]) {
+                    return true;
+                }
+            }
+        }
+        // return false;
+    }
+
+    facing_enemy() {
+        return true;
+    }
+
     draw() {
         super.draw();
         this.draw_name();
+        window.warrior_pos = this.pos;
         return this.pos;
     }
 }

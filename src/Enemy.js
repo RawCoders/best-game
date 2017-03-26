@@ -7,6 +7,7 @@ export default class Enemy extends Character {
 
         this.sprite = 'enemy'
         this.action = 'walk_down';
+        this.hp = 30;
         this.speed = speed;
     }
 
@@ -66,5 +67,9 @@ export default class Enemy extends Character {
     draw(character) {
         this.update_values = this.update_values.bind(this, character);
         super.draw();
+
+        const { ceil_x, ceil_y, floor_x, floor_y } = this.get_floor_ceil();
+        window.enemy[ceil_x][ceil_y] = 1;
+        window.enemy[floor_x][floor_y] = 1;
     }
 }
