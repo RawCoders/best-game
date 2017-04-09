@@ -3,9 +3,11 @@ var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 var p = require('path').resolve;
-server.listen(process.env.PORT || 9878);
 
-console.log('<<<<<<listening on ', process.env.PORT);
+var port = process.env.PORT || 9878;
+server.listen(port);
+
+console.log('listening on ', port);
 
 app.use(express.static('.'))
 

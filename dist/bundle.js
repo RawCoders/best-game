@@ -70,30 +70,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	exports.get_game = get_game;
+	exports.get_world = get_world;
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var config = _interopRequire(__webpack_require__(67));
 	
 	var Keyboard = _interopRequire(__webpack_require__(3));
 	
 	var SpriteLoader = _interopRequire(__webpack_require__(4));
 	
-	var Map = _interopRequire(__webpack_require__(5));
+	var World = _interopRequire(__webpack_require__(5));
 	
 	var Warrior = _interopRequire(__webpack_require__(6));
 	
-	var OtherWarrior = _interopRequire(__webpack_require__(8));
+	var WarriorData = _interopRequire(__webpack_require__(8));
 	
-	var Enemy = _interopRequire(__webpack_require__(9));
+	var OtherWarrior = _interopRequire(__webpack_require__(9));
 	
-	var WelcomeScreen = _interopRequire(__webpack_require__(10));
+	var Enemy = _interopRequire(__webpack_require__(10));
 	
-	var io = _interopRequire(__webpack_require__(11));
+	var WelcomeScreen = _interopRequire(__webpack_require__(11));
+	
+	var GameOverScreen = _interopRequire(__webpack_require__(13));
+	
+	var io = _interopRequire(__webpack_require__(14));
+	
+	var game = null;
+	var world = null;
 	
 	var Game = (function () {
 	    function Game() {
 	        _classCallCheck(this, Game);
 	
 	        this.setup_canvas();
-	        this.setup_variables();
+	        this.setup_config();
 	        this.setup_keyboard();
 	        this.setup_socket();
 	        this.bind_stop();
@@ -105,15 +118,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var _this = this;
 	
 	                this.setup_sprites().then(function () {
-	                    _this.start_game();
+	                    _this.start_new_game();
 	                });
 	            }
 	        },
-	        start_game: {
-	            value: function start_game() {
-	                this.setup_welcome_screen();
-	                this.setup_map();
-	                this.setup_warrior();
+	        start_new_game: {
+	            value: function start_new_game() {
+	                var lives = arguments[0] === undefined ? 3 : arguments[0];
+	
+	                if (!this.game_started) {
+	                    this.setup_welcome_screen();
+	                    this.setup_game_over_screen();
+	                }
+	                this.setup_world();
+	                this.setup_warrior(lives);
 	                this.setup_enemy();
 	                this.start_loop();
 	            }
@@ -121,9 +139,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        setup_canvas: {
 	            value: function setup_canvas() {
 	                this.canvas = document.getElementById("canvas");
-	                this.canvas.width = meta.canvas[0];
-	                this.canvas.height = meta.canvas[1];
-	                this.ctx = canvas.getContext("2d");
+	                var _config$canvas = config.canvas;
+	                var width = _config$canvas.width;
+	                var height = _config$canvas.height;
+	
+	                this.canvas.width = width;
+	                this.canvas.height = height;
+	                this.ctx = this.canvas.getContext("2d");
 	            }
 	        },
 	        start_loop: {
@@ -135,11 +157,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value: function draw() {
 	                this.ctx.clearRect(0, 0, this.o.canvas_width, this.o.canvas_height);
 	                if (!this.game_started) {
-	                    this.welcome_screen.draw();
+	                    if (this.game_over) {
+	                        this.game_over_screen.draw();
+	                    } else {
+	                        this.welcome_screen.draw();
+	                    }
 	                } else {
+	                    // TODO: don't start a new game on warrior death
+	                    if (this.warrior.end === true) {
+	                        if (this.warrior.lives > 0) {
+	                            clearInterval(this.game_loop);
+	                            this.start_new_game(this.warrior.lives);
+	                        } else {
+	                            this.game_started = false;
+	                            this.game_over = true;
+	                        }
+	                    }
 	                    this.reset_obstacles();
 	
-	                    this.map.draw(this.char_pos);
+	                    this.world.draw(this.char_pos);
 	
 	                    this.warrior.name = this.player_name;
 	                    this.char_pos = this.warrior.draw();
@@ -158,6 +194,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                    this.enemy_1.draw(this.warrior);
 	                    this.enemy_2.draw(this.warrior);
+	
+	                    // obstacles over players
+	                    this.world.draw_obstacles();
+	
+	                    // warrior data over everything else
+	                    this.warrior_data.draw();
 	                }
 	            }
 	        },
@@ -183,30 +225,52 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                        _this.socket.emit("new_client", {
 	                            name: player_name,
-	                            pos: [Math.floor(meta.camera[0] / 2), Math.floor(meta.camera[1] / 2)]
+	                            pos: [Math.floor(config.camera[0] / 2), Math.floor(config.camera[1] / 2)]
 	                        });
 	                    }
 	                });
 	            }
 	        },
-	        setup_map: {
-	            value: function setup_map() {
-	                this.map = new Map(this.ctx, this.spl);
+	        setup_game_over_screen: {
+	            value: function setup_game_over_screen() {
+	                var _this = this;
+	
+	                this.game_over_screen = new GameOverScreen(this.spl, {
+	                    on_game_restart: function () {
+	                        _this.game_over = false;
+	                        _this.game_started = false;
+	                        clearInterval(_this.game_loop);
+	                        _this.start_new_game();
+	                    }
+	                });
+	            }
+	        },
+	        setup_world: {
+	            value: function setup_world() {
+	                this.world = new World(this.spl, this.keyboard);
+	                // to export it to other entities
+	                world = this.world;
 	            }
 	        },
 	        setup_warrior: {
-	            value: function setup_warrior() {
-	                this.warrior = new Warrior(this.spl, [Math.floor(meta.map[0] / 2), Math.floor(meta.map[1] / 2)], this.player_name);
+	            value: function setup_warrior(lives) {
+	                this.warrior = new Warrior(this.spl, [Math.floor(config.world[0] / 2), Math.floor(config.world[1] / 2)], this.player_name, lives);
+	                this.setup_warrior_data();
+	            }
+	        },
+	        setup_warrior_data: {
+	            value: function setup_warrior_data() {
+	                this.warrior_data = new WarriorData(this.spl, this.warrior);
 	            }
 	        },
 	        setup_enemy: {
 	            value: function setup_enemy() {
-	                this.enemy_1 = new Enemy(this.spl, [Math.floor(meta.map[0]) - 2, 2], 1 / 2);
-	                this.enemy_2 = new Enemy(this.spl, [2, Math.floor(meta.map[1]) - 2], 1 / 2);
+	                this.enemy_1 = new Enemy(this.spl, [Math.floor(config.world[0]) - 2, 2], 1 / 2);
+	                this.enemy_2 = new Enemy(this.spl, [2, Math.floor(config.world[1]) - 2], 1 / 2);
 	            }
 	        },
-	        setup_variables: {
-	            value: function setup_variables() {
+	        setup_config: {
+	            value: function setup_config() {
 	                this.o = {
 	                    canvas_height: this.canvas.height,
 	                    canvas_width: this.canvas.width,
@@ -255,20 +319,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	        reset_obstacles: {
 	            value: function reset_obstacles() {
 	                window.obstacles = [];
-	                for (var i = 0; i < meta.map[0]; i++) {
+	                for (var i = 0; i < config.world[0]; i++) {
 	                    window.obstacles[i] = [];
-	                    for (var j = 0; j < meta.map[1]; j++) {
+	                    for (var j = 0; j < config.world[1]; j++) {
 	                        window.obstacles[i][j] = 0;
 	                    }
 	                }
 	
 	                window.enemy = [];
-	                for (var i = 0; i < meta.map[0]; i++) {
+	                for (var i = 0; i < config.world[0]; i++) {
 	                    window.enemy[i] = [];
-	                    for (var j = 0; j < meta.map[1]; j++) {
+	                    for (var j = 0; j < config.world[1]; j++) {
 	                        window.enemy[i][j] = 0;
 	                    }
 	                }
+	
+	                window.water = [];
+	                for (var i = 0; i < config.world[0]; i++) {
+	                    window.water[i] = [];
+	                    for (var j = 0; j < config.world[1]; j++) {
+	                        window.water[i][j] = 0;
+	                    }
+	                }
+	            }
+	        },
+	        info: {
+	            value: function info() {
+	                return this;
 	            }
 	        }
 	    });
@@ -276,26 +353,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return Game;
 	})();
 	
-	var game = new Game();
+	game = new Game();
 	game.init();
+	
+	function get_game() {
+	    return game;
+	}
+	
+	function get_world() {
+	    return world;
+	}
+	
+	window.game = game;
 
 /***/ },
-/* 2 */
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	var meta = {
-	    canvas: [720, 480],
-	    map: [64, 64],
-	    unit: 16
-	};
-	
-	meta.camera = [meta.canvas[0] / meta.unit, meta.canvas[1] / meta.unit];
-	
-	module.exports = meta;
-
-/***/ },
+/* 2 */,
 /* 3 */
 /***/ function(module, exports) {
 
@@ -364,7 +436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	var config = _interopRequire(__webpack_require__(67));
 	
 	var SpriteLoader = (function () {
 	    function SpriteLoader(ctx) {
@@ -383,7 +455,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    overworld: "assets/Overworld.png",
 	                    warrior: "assets/warrior.png",
 	                    enemy: "assets/enemy.png",
-	                    font: "assets/font.png"
+	                    font: "assets/font.png",
+	                    objects: "assets/objects.png"
 	                };
 	                var promises = [];
 	                for (var img in images) {
@@ -475,8 +548,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    for (var _iterator = string[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 	                        var char = _step.value;
 	
-	                        var _meta = this.get_font_meta(char);
-	                        this.ctx.drawImage(this.font, _meta.x, _meta.y, _meta.width, _meta.height, cursor[0] * unit, cursor[1] * unit, _meta.width * scale, _meta.height * scale);
+	                        var meta = this.get_font_meta(char);
+	                        this.ctx.drawImage(this.font, meta.x, meta.y, meta.width, meta.height, cursor[0] * unit, cursor[1] * unit, meta.width * scale, meta.height * scale);
 	                        cursor = [cursor[0] + 1, cursor[1]];
 	                    }
 	                } catch (err) {
@@ -565,7 +638,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        house_1: [6, 0, 5, 5],
 	        house_2: [5, 13, 2, 3],
 	        tower: [0, 21, 3, 8],
-	        water_waving: [[0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]] },
+	        water_waving: [[0, 1, 1, 1], [1, 1, 1, 1], [2, 1, 1, 1], [3, 1, 1, 1], [0, 2, 1, 1], [1, 2, 1, 1], [2, 2, 1, 1], [3, 2, 1, 1]],
+	        water_splashing: [[3, 3, 1, 1], [4, 3, 1, 1], [5, 3, 1, 1], [3, 4, 1, 1], [4, 4, 1, 1], [5, 4, 1, 1]] },
+	    objects: {
+	        warrior_data_base: [0, 14, 5, 4],
+	        warrior_data_mana: [0, 18, 4, 1],
+	        hp_heart_0: [8, 0, 1, 1],
+	        hp_heart_25: [7, 0, 1, 1],
+	        hp_heart_50: [6, 0, 1, 1],
+	        hp_heart_75: [5, 0, 1, 1],
+	        hp_heart_100: [4, 0, 1, 1] },
 	    warrior: {
 	        walk_down: [[0, 0, 1, 2], [1, 0, 1, 2], [2, 0, 1, 2], [3, 0, 1, 2]],
 	        walk_right: [[0, 2, 1, 2], [1, 2, 1, 2], [2, 2, 1, 2], [3, 2, 1, 2]],
@@ -650,7 +732,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "9": [28, 3, 1, 1],
 	    ".": [0, 4, 1, 2] };
 	
-	var unit = meta.unit;
+	var unit = config.unit;
 	var font_unit = 8;
 
 /***/ },
@@ -667,30 +749,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	var config = _interopRequire(__webpack_require__(67));
 	
-	var Keyboard = _interopRequire(__webpack_require__(3));
+	var Game = __webpack_require__(1).get_game;
 	
-	var Map = (function () {
-	    function Map(ctx, spl) {
-	        _classCallCheck(this, Map);
+	var World = (function () {
+	    function World(spl) {
+	        _classCallCheck(this, World);
 	
 	        this.spl = spl;
 	
+	        this.game = Game();
+	        this.keyboard = this.game.keyboard;
+	
 	        this.terrain = [];
 	        this.obstacles = [];
-	        this.camera_width = meta.camera[0];
-	        this.camera_height = meta.camera[1];
-	        this.map_width = meta.map[0];
-	        this.map_height = meta.map[1];
+	        this.water = [];
+	
+	        this.camera_width = config.camera[0];
+	        this.camera_height = config.camera[1];
+	        this.map_width = config.world[0];
+	        this.map_height = config.world[1];
 	
 	        this.camera_top_x = Math.floor((this.map_width - this.camera_width) / 2);
 	        this.camera_top_y = Math.floor((this.map_height - this.camera_height) / 2);
-	        this.keyboard = new Keyboard();
 	        this.generate_map();
 	    }
 	
-	    _createClass(Map, {
+	    _createClass(World, {
 	        draw: {
 	            value: function draw(char_pos) {
 	                if (char_pos) {
@@ -726,15 +812,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                    });
 	                });
+	                this.water.forEach(function (row, i) {
+	                    row.forEach(function (tile, j) {
+	                        if (tile) {
+	                            window.water[i][j] = tile;
+	                        }
+	                    });
+	                });
 	                this.render_camera(this.camera_top_x, this.camera_top_y);
 	            }
 	        },
 	        generate_map: {
 	            value: function generate_map() {
-	                var _this = this;
-	
 	                var me = this;
-	                // TO DO: start at centre, define obstacles
 	                // TO DO: consider spacetime drawing: for multi units(space) and animations(time)
 	
 	                for (var i = 0; i < this.map_width; i++) {
@@ -753,6 +843,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    this.obstacles.push(row);
 	                }
 	
+	                for (var i = 0; i < this.map_width; i++) {
+	                    var row = [];
+	                    for (var j = 0; j < this.map_height; j++) {
+	                        row.push(0);
+	                    }
+	                    this.water.push(row);
+	                }
+	
 	                var terrain_objects = ["yellow_patch", "blue_patch", "green_patch_1", "green_patch_2", "green_patch_3", "green_patch_4"];
 	                var obstacles = ["house_1", "tower"];
 	
@@ -765,61 +863,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    area2: [24, 25, 26],
 	                    area1: [22, 23, 24] };
 	
-	                terrain_objects.forEach(function (object) {
-	                    var meta = _this.spl.get_sprite_size("overworld", object);
-	                    var freq_list = frequencies["area" + meta.width * meta.height];
-	                    var frequency = freq_list[Math.floor(Math.random() * freq_list.length)];
+	                fill_objects(terrain_objects, me.terrain);
+	                fill_objects(obstacles, me.obstacles);
 	
-	                    for (var i = 0; i < frequency; i++) {
-	                        var _get_random_start_position = get_random_start_position(meta.width, meta.height);
+	                function fill_objects(objects, layer) {
+	                    objects.forEach(function (object) {
+	                        var meta = me.spl.get_sprite_size("overworld", object);
+	                        var freq_list = frequencies["area" + meta.width * meta.height];
+	                        var frequency = freq_list[Math.floor(Math.random() * freq_list.length)];
 	
-	                        var _get_random_start_position2 = _slicedToArray(_get_random_start_position, 2);
+	                        for (var i = 0; i < frequency; i++) {
+	                            var _get_random_start_position = get_random_start_position(meta.width, meta.height);
 	
-	                        var rand_x = _get_random_start_position2[0];
-	                        var rand_y = _get_random_start_position2[1];
+	                            var _get_random_start_position2 = _slicedToArray(_get_random_start_position, 2);
 	
-	                        place_object(object, rand_x, rand_y, meta.width, meta.height);
-	                    }
-	                });
+	                            var rand_x = _get_random_start_position2[0];
+	                            var rand_y = _get_random_start_position2[1];
 	
-	                function place_object(object, x, y, width, height) {
-	                    for (var i = x; i < x + width; i++) {
-	                        for (var j = y; j < y + height; j++) {
-	                            if (me.terrain[i][j] !== 0) {
-	                                // regenerate random start and retry?
-	                                return;
-	                            }
+	                            place_object(layer, object, rand_x, rand_y, meta.width, meta.height);
 	                        }
-	                    }
-	
-	                    for (var i = x; i < x + width; i++) {
-	                        for (var j = y; j < y + height; j++) {
-	                            me.terrain[i][j] = [object, i - x, j - y];
-	                        }
-	                    }
+	                    });
 	                }
 	
-	                obstacles.forEach(function (object) {
-	                    var meta = _this.spl.get_sprite_size("overworld", object);
-	                    var freq_list = frequencies["area" + meta.width * meta.height];
-	                    var frequency = freq_list[Math.floor(Math.random() * freq_list.length)];
-	
-	                    for (var i = 0; i < frequency; i++) {
-	                        var _get_random_start_position = get_random_start_position(meta.width, meta.height);
-	
-	                        var _get_random_start_position2 = _slicedToArray(_get_random_start_position, 2);
-	
-	                        var rand_x = _get_random_start_position2[0];
-	                        var rand_y = _get_random_start_position2[1];
-	
-	                        place_obstacle(object, rand_x, rand_y, meta.width, meta.height);
-	                    }
-	                });
-	
-	                function place_obstacle(object, x, y, width, height) {
+	                function place_object(layer, object, x, y, width, height) {
 	                    for (var i = x; i < x + width; i++) {
 	                        for (var j = y; j < y + height; j++) {
-	                            if (me.obstacles[i][j] !== 0) {
+	                            if (layer[i][j] !== 0) {
 	                                // regenerate random start and retry?
 	                                return;
 	                            }
@@ -828,7 +897,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                    for (var i = x; i < x + width; i++) {
 	                        for (var j = y; j < y + height; j++) {
-	                            me.obstacles[i][j] = [object, i - x, j - y];
+	                            if (object === "blue_patch" && i === x + 1 && j === y) {
+	                                me.water[i][j] = 1;
+	                            }
+	                            layer[i][j] = [object, i - x, j - y];
 	                        }
 	                    }
 	                }
@@ -840,24 +912,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        render_camera: {
 	            value: function render_camera(x, y) {
-	                var t = [];
-	                var o = [];
+	                this.t = [];
+	                this.o = [];
 	                for (var i = x; i < x + this.camera_width; i++) {
-	                    var row = [];
+	                    var t_row = [],
+	                        o_row = [];
 	                    for (var j = y; j < y + this.camera_height; j++) {
-	                        row.push(this.terrain[i][j]);
+	                        t_row.push(this.terrain[i][j]);
+	                        o_row.push(this.obstacles[i][j]);
 	                    }
-	                    t.push(row);
+	                    this.t.push(t_row);
+	                    this.o.push(o_row);
 	                }
 	
-	                for (var i = x; i < x + this.camera_width; i++) {
-	                    var row = [];
-	                    for (var j = y; j < y + this.camera_height; j++) {
-	                        row.push(this.obstacles[i][j]);
-	                    }
-	                    o.push(row);
-	                }
-	
+	                this.draw_terrain();
+	            }
+	        },
+	        draw_terrain: {
+	            value: function draw_terrain() {
+	                var t = this.t;
 	                for (var i = 0; i < this.camera_width; i++) {
 	                    for (var j = 0; j < this.camera_height; j++) {
 	                        if (t[i][j] === 0) {
@@ -868,7 +941,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                    }
 	                }
-	
+	            }
+	        },
+	        draw_obstacles: {
+	            value: function draw_obstacles() {
+	                var o = this.o;
 	                for (var i = 0; i < this.camera_width; i++) {
 	                    for (var j = 0; j < this.camera_height; j++) {
 	                        if (o[i][j] !== 0) {
@@ -878,13 +955,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                }
 	            }
+	        },
+	        is_enemy_on_tile: {
+	
+	            // relative to map (not camera)
+	
+	            value: function is_enemy_on_tile(_ref) {
+	                var _ref2 = _slicedToArray(_ref, 2);
+	
+	                var tile_x = _ref2[0];
+	                var tile_y = _ref2[1];
+	                var _game = this.game;
+	                var enemy_1 = _game.enemy_1;
+	                var enemy_2 = _game.enemy_2;
+	
+	                return enemy_1.pos[0] === tile_x && enemy_1.pos[1] === tile_y || enemy_2.pos[0] === tile_x && enemy_2.pos[1] === tile_y;
+	            }
+	        },
+	        is_obstacle_on_tile: {
+	            value: function is_obstacle_on_tile(_ref) {
+	                var _ref2 = _slicedToArray(_ref, 2);
+	
+	                var tile_x = _ref2[0];
+	                var tile_y = _ref2[1];
+	
+	                // if no obstacle returns 0,
+	                // else returns obstacles name
+	                return this.map.obstacles[(tile_x, tile_y)];
+	            }
 	        }
 	    });
 	
-	    return Map;
+	    return World;
 	})();
 	
-	module.exports = Map;
+	module.exports = World;
 
 /***/ },
 /* 6 */
@@ -902,24 +1007,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	var config = _interopRequire(__webpack_require__(67));
 	
 	var Character = _interopRequire(__webpack_require__(7));
 	
 	var Keyboard = _interopRequire(__webpack_require__(3));
 	
 	var Warrior = (function (_Character) {
-	    function Warrior(spl, initial_position, name) {
+	    function Warrior(spl, position, name, lives) {
 	        _classCallCheck(this, Warrior);
 	
-	        _get(Object.getPrototypeOf(Warrior.prototype), "constructor", this).call(this, spl, initial_position);
+	        _get(Object.getPrototypeOf(Warrior.prototype), "constructor", this).call(this, spl, position);
 	
-	        this.keyboard = new Keyboard();
 	        this.sprite = "warrior";
 	        this.action = "walk_down";
+	
+	        this.lives = lives;
 	        this.hp = 100;
 	
 	        this.name = name || "player one";
+	
+	        this.end = false;
+	
+	        this.keyboard = this.game.keyboard;
 	    }
 	
 	    _inherits(Warrior, _Character);
@@ -928,31 +1038,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	        update_values: {
 	            value: function update_values() {
 	                var pos = this.pos;
+	                if (window.water[pos[0]][pos[1]] && this.active === true) {
+	                    pos[1]++;
+	                    this.lives--;
+	                    this.active = false;
+	                    this.sprite = "overworld";
+	                    this.action = "water_splashing";
+	                }
 	
-	                if (this.keyboard.up_pressed) {
-	                    pos[1] = pos[1] - 1;
-	                    if (pos[1] < 0) pos[1] = 0;
+	                if (this.active) {
 	
-	                    this.action = "walk_up";
-	                } else if (this.keyboard.down_pressed) {
-	                    pos[1] = pos[1] + 1;
-	                    if (pos[1] > meta.map[1] - 2) pos[1] = meta.map[1] - 2;
+	                    if (this.keyboard.up_pressed) {
+	                        pos[1] = pos[1] - 1;
+	                        if (pos[1] < 0) pos[1] = 0;
 	
-	                    this.action = "walk_down";
-	                } else if (this.keyboard.left_pressed) {
-	                    pos[0] = pos[0] - 1;
-	                    if (pos[0] < 0) pos[0] = 0;
+	                        this.action = "walk_up";
+	                    } else if (this.keyboard.down_pressed) {
+	                        pos[1] = pos[1] + 1;
+	                        if (pos[1] > config.world[1] - 2) pos[1] = config.world[1] - 2;
 	
-	                    this.action = "walk_left";
-	                } else if (this.keyboard.right_pressed) {
-	                    pos[0] = pos[0] + 1;
-	                    if (pos[0] > meta.map[0] - 1) pos[0] = meta.map[0] - 1;
+	                        this.action = "walk_down";
+	                    } else if (this.keyboard.left_pressed) {
+	                        pos[0] = pos[0] - 1;
+	                        if (pos[0] < 0) pos[0] = 0;
 	
-	                    this.action = "walk_right";
-	                } else if (this.is_near_enemy() && this.facing_enemy()) {
-	                    console.log("enemy here");
+	                        this.action = "walk_left";
+	                    } else if (this.keyboard.right_pressed) {
+	                        pos[0] = pos[0] + 1;
+	                        if (pos[0] > config.world[0] - 1) pos[0] = config.world[0] - 1;
+	
+	                        this.action = "walk_right";
+	                    } else if (this.is_near_enemy() && this.facing_enemy()) {
+	                        console.log("enemy here");
+	                    } else {
+	                        this.next_frame = 0;
+	                    }
 	                } else {
-	                    this.next_frame = 0;
+	                    // Dying state(drowning, ): No keyboard actions
+	                    if (this.next_frame === 0) {
+	                        this.end = true;
+	                    }
 	                }
 	            }
 	        },
@@ -970,10 +1095,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            value: function is_near_enemy() {
 	                var nearby = [[[-1, -1], [0, -1], [1, -1]], [[-1, 0], [0, 0], [1, 0]], [[-1, 1], [0, 1], [1, 1]]];
 	
-	                if (window.enemy[this.pos[0] + 1][this.pos[1] + 0]) {
-	                    return true;
-	                }
-	
 	                var _iteratorNormalCompletion = true;
 	                var _didIteratorError = false;
 	                var _iteratorError = undefined;
@@ -990,7 +1111,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                var col = _step2.value;
 	
 	                                var tile = [this.pos[0] + col[0], this.pos[1] + col[1]];
-	                                if (window.enemy[tile[0]][tile[1]]) {
+	
+	                                if (this.world.is_enemy_on_tile(tile)) {
 	                                    return true;
 	                                }
 	                            }
@@ -1044,7 +1166,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	})(Character);
 	
 	module.exports = Warrior;
-	// return false;
 
 /***/ },
 /* 7 */
@@ -1052,26 +1173,30 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
-	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-	
 	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	var _Game = __webpack_require__(1);
+	
+	var Game = _Game.get_game;
+	var World = _Game.get_world;
 	
 	var Character = (function () {
-	    function Character(spl, inital_position) {
+	    function Character(spl, position) {
 	        _classCallCheck(this, Character);
 	
 	        this.spl = spl;
 	
 	        this.next_frame = 0;
-	        this.pos = inital_position;
+	        this.pos = position;
 	        this.hp = 0;
+	        this.active = true;
 	        this.sprite = "override_me";
-	        // this.pos = [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)];
 	        this.action = "walk_down";
+	
+	        this.game = Game();
+	        this.world = World();
 	    }
 	
 	    _createClass(Character, {
@@ -1080,10 +1205,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        draw: {
 	            value: function draw() {
+	                // make copy of old pos
 	                this.old_pos = this.pos.slice();
-	
 	                this.update_values();
-	
 	                if (this.is_obstacle()) {
 	                    this.pos = this.old_pos;
 	                }
@@ -1135,6 +1259,48 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var WarriorData = (function () {
+	    function WarriorData(spl, warrior) {
+	        _classCallCheck(this, WarriorData);
+	
+	        this.spl = spl;
+	        this.warrior = warrior;
+	    }
+	
+	    _createClass(WarriorData, {
+	        draw: {
+	            value: function draw() {
+	                this.spl.draw("objects", "warrior_data_base", 1, 1, { scale: 2 });
+	                this.spl.draw("objects", "warrior_data_mana", 3, 5, { scale: 2 });
+	
+	                for (var i = 1, heart_pos = 5; i <= this.warrior.lives; i++, heart_pos += 2) {
+	                    var element = undefined;
+	                    if (i === this.warrior.lives) {
+	                        element = "hp_heart_" + this.warrior.hp;
+	                    } else {
+	                        element = "hp_heart_100";
+	                    }
+	                    this.spl.draw("objects", element, heart_pos, 2, { scale: 2 });
+	                }
+	            }
+	        }
+	    });
+	
+	    return WarriorData;
+	})();
+	
+	module.exports = WarriorData;
+
+/***/ },
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1149,15 +1315,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var meta = _interopRequire(__webpack_require__(2));
+	var config = _interopRequire(__webpack_require__(67));
 	
 	var Warrior = _interopRequire(__webpack_require__(6));
 	
 	var OtherWarrior = (function (_Warrior) {
-	    function OtherWarrior(spl, initial_position, name) {
+	    function OtherWarrior(spl, position, name) {
 	        _classCallCheck(this, OtherWarrior);
 	
-	        _get(Object.getPrototypeOf(OtherWarrior.prototype), "constructor", this).call(this, spl, initial_position);
+	        _get(Object.getPrototypeOf(OtherWarrior.prototype), "constructor", this).call(this, spl, position);
 	
 	        this.sprite = "warrior";
 	        this.action = "walk_down";
@@ -1184,7 +1350,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = OtherWarrior;
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1198,8 +1364,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-	
-	var meta = _interopRequire(__webpack_require__(2));
 	
 	var Character = _interopRequire(__webpack_require__(7));
 	
@@ -1293,7 +1457,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = Enemy;
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -1302,20 +1466,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 	
+	var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+	
+	var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+	
 	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 	
-	var Keyboard = _interopRequire(__webpack_require__(3));
+	var Screen = _interopRequire(__webpack_require__(12));
 	
-	var WelcomeScreen = (function () {
+	var WelcomeScreen = (function (_Screen) {
 	    function WelcomeScreen(spl, handlers) {
 	        _classCallCheck(this, WelcomeScreen);
 	
-	        this.spl = spl;
-	        this.keyboard = new Keyboard();
-	        this.curr_frame = 0;
+	        _get(Object.getPrototypeOf(WelcomeScreen.prototype), "constructor", this).call(this, spl, handlers);
 	        this.space_pressed = false;
 	        this.on_gamestart = handlers.on_gamestart;
 	    }
+	
+	    _inherits(WelcomeScreen, _Screen);
 	
 	    _createClass(WelcomeScreen, {
 	        draw: {
@@ -1340,12 +1508,101 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	
 	    return WelcomeScreen;
-	})();
+	})(Screen);
 	
 	module.exports = WelcomeScreen;
 
 /***/ },
-/* 11 */
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var Keyboard = _interopRequire(__webpack_require__(3));
+	
+	var Screen = (function () {
+	    function Screen(spl, handlers) {
+	        _classCallCheck(this, Screen);
+	
+	        this.spl = spl;
+	        this.keyboard = new Keyboard();
+	        this.curr_frame = 0;
+	    }
+	
+	    _createClass(Screen, {
+	        draw: {
+	            value: function draw() {}
+	        }
+	    });
+	
+	    return Screen;
+	})();
+	
+	module.exports = Screen;
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+	
+	var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	
+	var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+	
+	var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+	
+	var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+	
+	var Screen = _interopRequire(__webpack_require__(12));
+	
+	var GameOverScreen = (function (_Screen) {
+	    function GameOverScreen(spl, handlers) {
+	        _classCallCheck(this, GameOverScreen);
+	
+	        _get(Object.getPrototypeOf(GameOverScreen.prototype), "constructor", this).call(this, spl, handlers);
+	        this.space_pressed = false;
+	        this.on_game_restart = handlers.on_game_restart;
+	    }
+	
+	    _inherits(GameOverScreen, _Screen);
+	
+	    _createClass(GameOverScreen, {
+	        draw: {
+	            value: function draw() {
+	                var _this = this;
+	
+	                this.spl.draw("font", "backdrop", 7, 10, { scale: 2 });
+	                this.spl.drawText("Game Over", 18, 12, { scale: 2 });
+	                if (this.curr_frame >= 4) {
+	                    this.spl.drawText("Press space to restart", 12, 15, { scale: 2 });
+	                }
+	                this.curr_frame = (this.curr_frame + 1) % 8;
+	
+	                this.keyboard.on_keyup_space = function () {
+	                    _this.on_game_restart();
+	                };
+	
+	                return this.space_pressed;
+	            }
+	        }
+	    });
+	
+	    return GameOverScreen;
+	})(Screen);
+	
+	module.exports = GameOverScreen;
+
+/***/ },
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1353,10 +1610,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var url = __webpack_require__(12);
-	var parser = __webpack_require__(18);
-	var Manager = __webpack_require__(29);
-	var debug = __webpack_require__(14)('socket.io-client');
+	var url = __webpack_require__(15);
+	var parser = __webpack_require__(21);
+	var Manager = __webpack_require__(32);
+	var debug = __webpack_require__(17)('socket.io-client');
 	
 	/**
 	 * Module exports.
@@ -1455,12 +1712,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @api public
 	 */
 	
-	exports.Manager = __webpack_require__(29);
-	exports.Socket = __webpack_require__(58);
+	exports.Manager = __webpack_require__(32);
+	exports.Socket = __webpack_require__(61);
 
 
 /***/ },
-/* 12 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -1468,8 +1725,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var parseuri = __webpack_require__(13);
-	var debug = __webpack_require__(14)('socket.io-client:url');
+	var parseuri = __webpack_require__(16);
+	var debug = __webpack_require__(17)('socket.io-client:url');
 	
 	/**
 	 * Module exports.
@@ -1542,7 +1799,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 13 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/**
@@ -1587,7 +1844,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 14 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {
@@ -1597,7 +1854,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Expose `debug()` as the module.
 	 */
 	
-	exports = module.exports = __webpack_require__(16);
+	exports = module.exports = __webpack_require__(19);
 	exports.log = log;
 	exports.formatArgs = formatArgs;
 	exports.save = save;
@@ -1768,10 +2025,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } catch (e) {}
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18)))
 
 /***/ },
-/* 15 */
+/* 18 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -1957,7 +2214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1973,7 +2230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.disable = disable;
 	exports.enable = enable;
 	exports.enabled = enabled;
-	exports.humanize = __webpack_require__(17);
+	exports.humanize = __webpack_require__(20);
 	
 	/**
 	 * The currently active debug mode names, and names to skip.
@@ -2163,7 +2420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 17 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/**
@@ -2318,7 +2575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2326,11 +2583,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var debug = __webpack_require__(19)('socket.io-parser');
-	var json = __webpack_require__(22);
-	var Emitter = __webpack_require__(25);
-	var binary = __webpack_require__(26);
-	var isBuf = __webpack_require__(28);
+	var debug = __webpack_require__(22)('socket.io-parser');
+	var json = __webpack_require__(25);
+	var Emitter = __webpack_require__(28);
+	var binary = __webpack_require__(29);
+	var isBuf = __webpack_require__(31);
 	
 	/**
 	 * Protocol version.
@@ -2728,7 +2985,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2738,7 +2995,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Expose `debug()` as the module.
 	 */
 	
-	exports = module.exports = __webpack_require__(20);
+	exports = module.exports = __webpack_require__(23);
 	exports.log = log;
 	exports.formatArgs = formatArgs;
 	exports.save = save;
@@ -2902,7 +3159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2918,7 +3175,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.disable = disable;
 	exports.enable = enable;
 	exports.enabled = enabled;
-	exports.humanize = __webpack_require__(21);
+	exports.humanize = __webpack_require__(24);
 	
 	/**
 	 * The currently active debug mode names, and names to skip.
@@ -3105,7 +3362,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 21 */
+/* 24 */
 /***/ function(module, exports) {
 
 	/**
@@ -3236,14 +3493,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 22 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 	;(function () {
 	  // Detect the `define` function exposed by asynchronous module loaders. The
 	  // strict `define` check is necessary for compatibility with `r.js`.
-	  var isLoader = "function" === "function" && __webpack_require__(24);
+	  var isLoader = "function" === "function" && __webpack_require__(27);
 	
 	  // A set of types used to distinguish objects from primitives.
 	  var objectTypes = {
@@ -4142,10 +4399,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	}).call(this);
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26)(module), (function() { return this; }())))
 
 /***/ },
-/* 23 */
+/* 26 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -4161,7 +4418,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 24 */
+/* 27 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
@@ -4169,7 +4426,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 25 */
+/* 28 */
 /***/ function(module, exports) {
 
 	
@@ -4339,7 +4596,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 26 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*global Blob,File*/
@@ -4348,8 +4605,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module requirements
 	 */
 	
-	var isArray = __webpack_require__(27);
-	var isBuf = __webpack_require__(28);
+	var isArray = __webpack_require__(30);
+	var isBuf = __webpack_require__(31);
 	
 	/**
 	 * Replaces every Buffer | ArrayBuffer in packet with a numbered placeholder.
@@ -4487,7 +4744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 27 */
+/* 30 */
 /***/ function(module, exports) {
 
 	module.exports = Array.isArray || function (arr) {
@@ -4496,7 +4753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 28 */
+/* 31 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -4516,7 +4773,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 29 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4524,15 +4781,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var eio = __webpack_require__(30);
-	var Socket = __webpack_require__(58);
-	var Emitter = __webpack_require__(59);
-	var parser = __webpack_require__(18);
-	var on = __webpack_require__(61);
-	var bind = __webpack_require__(62);
-	var debug = __webpack_require__(14)('socket.io-client:manager');
-	var indexOf = __webpack_require__(56);
-	var Backoff = __webpack_require__(63);
+	var eio = __webpack_require__(33);
+	var Socket = __webpack_require__(61);
+	var Emitter = __webpack_require__(62);
+	var parser = __webpack_require__(21);
+	var on = __webpack_require__(64);
+	var bind = __webpack_require__(65);
+	var debug = __webpack_require__(17)('socket.io-client:manager');
+	var indexOf = __webpack_require__(59);
+	var Backoff = __webpack_require__(66);
 	
 	/**
 	 * IE6+ hasOwnProperty
@@ -5082,19 +5339,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 30 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	module.exports = __webpack_require__(31);
+	module.exports = __webpack_require__(34);
 
 
 /***/ },
-/* 31 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	module.exports = __webpack_require__(32);
+	module.exports = __webpack_require__(35);
 	
 	/**
 	 * Exports parser
@@ -5102,25 +5359,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @api public
 	 *
 	 */
-	module.exports.parser = __webpack_require__(39);
+	module.exports.parser = __webpack_require__(42);
 
 
 /***/ },
-/* 32 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies.
 	 */
 	
-	var transports = __webpack_require__(33);
-	var Emitter = __webpack_require__(47);
-	var debug = __webpack_require__(51)('engine.io-client:socket');
-	var index = __webpack_require__(56);
-	var parser = __webpack_require__(39);
-	var parseuri = __webpack_require__(13);
-	var parsejson = __webpack_require__(57);
-	var parseqs = __webpack_require__(48);
+	var transports = __webpack_require__(36);
+	var Emitter = __webpack_require__(50);
+	var debug = __webpack_require__(54)('engine.io-client:socket');
+	var index = __webpack_require__(59);
+	var parser = __webpack_require__(42);
+	var parseuri = __webpack_require__(16);
+	var parsejson = __webpack_require__(60);
+	var parseqs = __webpack_require__(51);
 	
 	/**
 	 * Module exports.
@@ -5252,9 +5509,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	
 	Socket.Socket = Socket;
-	Socket.Transport = __webpack_require__(38);
-	Socket.transports = __webpack_require__(33);
-	Socket.parser = __webpack_require__(39);
+	Socket.Transport = __webpack_require__(41);
+	Socket.transports = __webpack_require__(36);
+	Socket.parser = __webpack_require__(42);
 	
 	/**
 	 * Creates transport of the given type.
@@ -5851,17 +6108,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 33 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies
 	 */
 	
-	var XMLHttpRequest = __webpack_require__(34);
-	var XHR = __webpack_require__(36);
-	var JSONP = __webpack_require__(53);
-	var websocket = __webpack_require__(54);
+	var XMLHttpRequest = __webpack_require__(37);
+	var XHR = __webpack_require__(39);
+	var JSONP = __webpack_require__(56);
+	var websocket = __webpack_require__(57);
 	
 	/**
 	 * Export transports.
@@ -5911,12 +6168,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 34 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {// browser shim for xmlhttprequest module
 	
-	var hasCORS = __webpack_require__(35);
+	var hasCORS = __webpack_require__(38);
 	
 	module.exports = function (opts) {
 	  var xdomain = opts.xdomain;
@@ -5955,7 +6212,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 35 */
+/* 38 */
 /***/ function(module, exports) {
 
 	
@@ -5978,18 +6235,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 36 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module requirements.
 	 */
 	
-	var XMLHttpRequest = __webpack_require__(34);
-	var Polling = __webpack_require__(37);
-	var Emitter = __webpack_require__(47);
-	var inherit = __webpack_require__(49);
-	var debug = __webpack_require__(51)('engine.io-client:polling-xhr');
+	var XMLHttpRequest = __webpack_require__(37);
+	var Polling = __webpack_require__(40);
+	var Emitter = __webpack_require__(50);
+	var inherit = __webpack_require__(52);
+	var debug = __webpack_require__(54)('engine.io-client:polling-xhr');
 	
 	/**
 	 * Module exports.
@@ -6409,19 +6666,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 37 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 	
-	var Transport = __webpack_require__(38);
-	var parseqs = __webpack_require__(48);
-	var parser = __webpack_require__(39);
-	var inherit = __webpack_require__(49);
-	var yeast = __webpack_require__(50);
-	var debug = __webpack_require__(51)('engine.io-client:polling');
+	var Transport = __webpack_require__(41);
+	var parseqs = __webpack_require__(51);
+	var parser = __webpack_require__(42);
+	var inherit = __webpack_require__(52);
+	var yeast = __webpack_require__(53);
+	var debug = __webpack_require__(54)('engine.io-client:polling');
 	
 	/**
 	 * Module exports.
@@ -6434,7 +6691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	
 	var hasXHR2 = (function () {
-	  var XMLHttpRequest = __webpack_require__(34);
+	  var XMLHttpRequest = __webpack_require__(37);
 	  var xhr = new XMLHttpRequest({ xdomain: false });
 	  return null != xhr.responseType;
 	})();
@@ -6660,15 +6917,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 38 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * Module dependencies.
 	 */
 	
-	var parser = __webpack_require__(39);
-	var Emitter = __webpack_require__(47);
+	var parser = __webpack_require__(42);
+	var Emitter = __webpack_require__(50);
 	
 	/**
 	 * Module exports.
@@ -6823,22 +7080,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 39 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies.
 	 */
 	
-	var keys = __webpack_require__(40);
-	var hasBinary = __webpack_require__(41);
-	var sliceBuffer = __webpack_require__(42);
-	var after = __webpack_require__(43);
-	var utf8 = __webpack_require__(44);
+	var keys = __webpack_require__(43);
+	var hasBinary = __webpack_require__(44);
+	var sliceBuffer = __webpack_require__(45);
+	var after = __webpack_require__(46);
+	var utf8 = __webpack_require__(47);
 	
 	var base64encoder;
 	if (global && global.ArrayBuffer) {
-	  base64encoder = __webpack_require__(45);
+	  base64encoder = __webpack_require__(48);
 	}
 	
 	/**
@@ -6896,7 +7153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Create a blob api even for blob builder when vendor prefixes exist
 	 */
 	
-	var Blob = __webpack_require__(46);
+	var Blob = __webpack_require__(49);
 	
 	/**
 	 * Encodes a packet.
@@ -7439,7 +7696,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 40 */
+/* 43 */
 /***/ function(module, exports) {
 
 	
@@ -7464,7 +7721,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -7472,7 +7729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module requirements.
 	 */
 	
-	var isArray = __webpack_require__(27);
+	var isArray = __webpack_require__(30);
 	
 	/**
 	 * Module exports.
@@ -7530,7 +7787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 42 */
+/* 45 */
 /***/ function(module, exports) {
 
 	/**
@@ -7565,7 +7822,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 43 */
+/* 46 */
 /***/ function(module, exports) {
 
 	module.exports = after
@@ -7599,7 +7856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 44 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/wtf8 v1.0.0 by @mathias */
@@ -7835,10 +8092,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	}(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(26)(module), (function() { return this; }())))
 
 /***/ },
-/* 45 */
+/* 48 */
 /***/ function(module, exports) {
 
 	/*
@@ -7911,7 +8168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 46 */
+/* 49 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -8014,7 +8271,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 47 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -8183,7 +8440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */
+/* 51 */
 /***/ function(module, exports) {
 
 	/**
@@ -8226,7 +8483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 49 */
+/* 52 */
 /***/ function(module, exports) {
 
 	
@@ -8238,7 +8495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 50 */
+/* 53 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -8312,7 +8569,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {
@@ -8322,7 +8579,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Expose `debug()` as the module.
 	 */
 	
-	exports = module.exports = __webpack_require__(52);
+	exports = module.exports = __webpack_require__(55);
 	exports.log = log;
 	exports.formatArgs = formatArgs;
 	exports.save = save;
@@ -8493,10 +8750,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } catch (e) {}
 	}
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(18)))
 
 /***/ },
-/* 52 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -8512,7 +8769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.disable = disable;
 	exports.enable = enable;
 	exports.enabled = enabled;
-	exports.humanize = __webpack_require__(17);
+	exports.humanize = __webpack_require__(20);
 	
 	/**
 	 * The currently active debug mode names, and names to skip.
@@ -8702,7 +8959,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 53 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -8710,8 +8967,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module requirements.
 	 */
 	
-	var Polling = __webpack_require__(37);
-	var inherit = __webpack_require__(49);
+	var Polling = __webpack_require__(40);
+	var inherit = __webpack_require__(52);
 	
 	/**
 	 * Module exports.
@@ -8940,24 +9197,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 54 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * Module dependencies.
 	 */
 	
-	var Transport = __webpack_require__(38);
-	var parser = __webpack_require__(39);
-	var parseqs = __webpack_require__(48);
-	var inherit = __webpack_require__(49);
-	var yeast = __webpack_require__(50);
-	var debug = __webpack_require__(51)('engine.io-client:websocket');
+	var Transport = __webpack_require__(41);
+	var parser = __webpack_require__(42);
+	var parseqs = __webpack_require__(51);
+	var inherit = __webpack_require__(52);
+	var yeast = __webpack_require__(53);
+	var debug = __webpack_require__(54)('engine.io-client:websocket');
 	var BrowserWebSocket = global.WebSocket || global.MozWebSocket;
 	var NodeWebSocket;
 	if (typeof window === 'undefined') {
 	  try {
-	    NodeWebSocket = __webpack_require__(55);
+	    NodeWebSocket = __webpack_require__(58);
 	  } catch (e) { }
 	}
 	
@@ -9232,13 +9489,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 55 */
+/* 58 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 56 */
+/* 59 */
 /***/ function(module, exports) {
 
 	
@@ -9253,7 +9510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 57 */
+/* 60 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -9291,7 +9548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 58 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -9299,13 +9556,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Module dependencies.
 	 */
 	
-	var parser = __webpack_require__(18);
-	var Emitter = __webpack_require__(59);
-	var toArray = __webpack_require__(60);
-	var on = __webpack_require__(61);
-	var bind = __webpack_require__(62);
-	var debug = __webpack_require__(14)('socket.io-client:socket');
-	var hasBin = __webpack_require__(41);
+	var parser = __webpack_require__(21);
+	var Emitter = __webpack_require__(62);
+	var toArray = __webpack_require__(63);
+	var on = __webpack_require__(64);
+	var bind = __webpack_require__(65);
+	var debug = __webpack_require__(17)('socket.io-client:socket');
+	var hasBin = __webpack_require__(44);
 	
 	/**
 	 * Module exports.
@@ -9716,7 +9973,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -9885,7 +10142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 63 */
 /***/ function(module, exports) {
 
 	module.exports = toArray
@@ -9904,7 +10161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 64 */
 /***/ function(module, exports) {
 
 	
@@ -9934,7 +10191,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 65 */
 /***/ function(module, exports) {
 
 	/**
@@ -9963,7 +10220,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 66 */
 /***/ function(module, exports) {
 
 	
@@ -10052,6 +10309,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 
+
+/***/ },
+/* 67 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var config = {
+	    canvas: {
+	        width: 720,
+	        height: 480
+	    },
+	    world: [64, 64],
+	    unit: 16
+	};
+	
+	config.camera = [config.canvas.width / config.unit, config.canvas.height / config.unit];
+	
+	module.exports = config;
 
 /***/ }
 /******/ ])

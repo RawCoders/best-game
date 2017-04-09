@@ -6,6 +6,7 @@ module.exports = {
         library: 'es6Boilerplate',
         libraryTarget: 'umd'
     },
+    devtool: 'source-map',
     module: {
         preLoaders: [{
             test: /\.js$/, // include .js files

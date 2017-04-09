@@ -1,9 +1,9 @@
-import meta from './Meta';
+import config from './Config';
 import Warrior from './Warrior';
 
 export default class OtherWarrior extends Warrior {
-    constructor(spl, initial_position, name) {
-        super(spl, initial_position);
+    constructor(spl, position, name) {
+        super(spl, position);
 
         this.sprite = 'warrior';
         this.action = 'walk_down';

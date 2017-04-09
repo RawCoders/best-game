@@ -1,15 +1,19 @@
-import meta from './Meta';
+import { get_game as Game } from './Game';
+import { get_world as World } from './Game';
 
 export default class Character {
-    constructor(spl, inital_position) {
+    constructor(spl, position) {
         this.spl = spl;
 
         this.next_frame = 0;
-        this.pos = inital_position;
+        this.pos = position;
         this.hp = 0;
+        this.active = true;
         this.sprite = 'override_me';
-        // this.pos = [Math.floor(meta.camera[0]/2), Math.floor(meta.camera[1]/2)];
         this.action = 'walk_down';
+
+        this.game = Game();
+        this.world = World();
     }
 
     update_values() {
@@ -17,10 +21,9 @@ export default class Character {
     }
 
     draw() {
+        // make copy of old pos
         this.old_pos = this.pos.slice();
-
         this.update_values();
-        
         if(this.is_obstacle()) {
             this.pos = this.old_pos;
         }

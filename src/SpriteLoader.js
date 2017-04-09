@@ -1,4 +1,5 @@
-import meta from './Meta';
+import config from './Config';
+
 export default class SpriteLoader {
 
     constructor(ctx) {
@@ -11,7 +12,8 @@ export default class SpriteLoader {
             'overworld': 'assets/Overworld.png',
             'warrior': 'assets/warrior.png',
             'enemy': 'assets/enemy.png',
-            'font': 'assets/font.png'
+            'font': 'assets/font.png',
+            'objects': 'assets/objects.png'
         };
         let promises = [];
         for (let img in images) {
@@ -129,6 +131,23 @@ const sprite_json = {
             [2, 2, 1, 1],
             [3, 2, 1, 1]
         ],
+        water_splashing: [
+            [3, 3, 1, 1],
+            [4, 3, 1, 1],
+            [5, 3, 1, 1],
+            [3, 4, 1, 1],
+            [4, 4, 1, 1],
+            [5, 4, 1, 1]
+        ],
+    },
+    objects: {
+        warrior_data_base: [0, 14, 5, 4],
+        warrior_data_mana: [0, 18, 4, 1],
+        hp_heart_0: [8, 0, 1, 1],
+        hp_heart_25: [7, 0, 1, 1],
+        hp_heart_50: [6, 0, 1, 1],
+        hp_heart_75: [5, 0, 1, 1],
+        hp_heart_100: [4, 0, 1, 1],
     },
     warrior: {
         walk_down: [
@@ -278,5 +297,5 @@ const font_json = {
     '.': [0, 4, 1, 2],
 }
 
-const unit = meta.unit;
+const unit = config.unit;
 const font_unit = 8;
